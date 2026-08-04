@@ -47,7 +47,15 @@ Build and compare:
 
 Use chronological validation.
 
+## Sprint 3.5 — Multi-season data and evaluation foundation
+
+**Completed 2026-08-03; awaiting review.** Added separately cached and hashed 2021–2024
+seasons, rule-era metadata, versioned prior-history features, and rolling-origin 2022–2025
+development backtests. See `docs/MULTISEASON_2021_2025_AUDIT.md`.
+
 ## Sprint 4 — Confirmed-lineup matchup engine
+
+Sprint 4 remains deferred pending review of Sprint 3.5.
 
 Add:
 

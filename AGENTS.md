@@ -188,4 +188,4 @@ A change is complete only when:
 
 ## Ending of every task
 
-After every completed milestone, pause automatically, summarize the work, list any risks or technical debt, recommend whether to proceed, and wait for explicit approval before starting the next milestone.
+After every completed milestone, pause automatically, summarize the work, list any risks or technical debt, recommend whether to proceed, list any manual tasks needed to be completed, and wait for explicit approval before starting the next milestone.

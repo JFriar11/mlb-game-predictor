@@ -186,3 +186,21 @@ Do not begin Sprint 3 baseline model training until the user reviews the feature
 
 Do not begin advanced lineup weighting, Statcast, weather, pitcher clustering, simulation,
 API, dashboard, or other Sprint 4+ work until the user reviews this Sprint 3 audit.
+
+## Completed plan: Sprint 3.5 — Multi-season data and evaluation foundation
+
+**Status:** Completed 2026-08-03. Awaiting review before Sprint 4.
+
+- Added and independently audited 2021–2024 alongside unchanged raw 2025 artifacts.
+- Added rule-era game metadata and explicit cancelled/special-venue handling.
+- Built 24,296 rows for each separately versioned decay, no-decay, and cold-start feature
+  treatment; `sprint2_v1` remains intact.
+- Ran rolling origins that train only on prior seasons and evaluate 2022, 2023, 2024,
+  then 2025. No period is described as untouched prospective performance.
+- Gradient boosting led combined development Poisson deviance, while prior history and
+  offseason decay helped stabilized Poisson. A raw numeric season indicator did not help.
+- Reserved 2026 live predictions or another future locked period for prospective evidence.
+
+### Stop condition
+
+Stop for review. Do not begin Sprint 4 or any advanced feature/model/application work.

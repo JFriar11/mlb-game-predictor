@@ -21,12 +21,12 @@ class FeatureAudit:
     rows_with_no_fallbacks: int
     min_team_prior_games: int
     max_team_prior_games: int
+    expected_rows: int
 
     @property
     def passed(self) -> bool:
         return (
-            self.rows == 4860
-            and self.games == 2430
+            self.rows == self.expected_rows
             and not self.games_without_two_rows
             and not self.as_of_violations
             and not self.source_date_violations
@@ -95,6 +95,7 @@ def audit_features(session: Session, feature_version: str = "sprint2_v1") -> Fea
         if any(not math.isfinite(getattr(snapshot, field)) for field in numeric_fields)
     )
     prior_games = [snapshot.team_prior_games for snapshot in snapshots]
+    expected_rows = len(game_map) * 2
     return FeatureAudit(
         feature_version=feature_version,
         rows=len(snapshots),
@@ -107,4 +108,5 @@ def audit_features(session: Session, feature_version: str = "sprint2_v1") -> Fea
         rows_with_no_fallbacks=sum(snapshot.fallback_count == 0 for snapshot in snapshots),
         min_team_prior_games=min(prior_games, default=0),
         max_team_prior_games=max(prior_games, default=0),
+        expected_rows=expected_rows,
     )

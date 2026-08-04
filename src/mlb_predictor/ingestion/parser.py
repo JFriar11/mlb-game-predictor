@@ -3,6 +3,11 @@ from datetime import UTC, date, datetime
 from typing import Any
 
 SOURCE = "MLB_STATS_API"
+SPECIAL_VENUES: dict[int, tuple[int, str]] = {
+    # The archived feed omits gameData.venue; MLB identifies this as the Dyersville game.
+    632924: (-1, "Field of Dreams, Dyersville"),
+    663023: (-1, "Field of Dreams, Dyersville"),
+}
 
 
 class FeedValidationError(ValueError):
@@ -88,6 +93,13 @@ class ParsedGame:
     innings_played: int
     doubleheader_code: str
     game_number: int
+    scheduled_innings: int
+    tiebreaker_code: str
+    day_night: str | None
+    original_date: date | None
+    rescheduled_from_date: date | None
+    resume_date: date | None
+    is_suspended_resumption: bool
     teams: tuple[dict[str, Any], dict[str, Any]]
     venue_name: str
     players: tuple[ParsedPlayer, ...]
@@ -101,6 +113,10 @@ def _parse_datetime(value: str | None) -> datetime | None:
     if not value:
         return None
     return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
+
+
+def _parse_date(value: str | None) -> date | None:
+    return date.fromisoformat(value[:10]) if value else None
 
 
 def innings_to_outs(value: str) -> int:
@@ -238,6 +254,18 @@ def parse_game_feed(
     scheduled = _parse_datetime(game_data["datetime"]["dateTime"])
     if scheduled is None:
         raise FeedValidationError(f"Game {game_pk} has no scheduled time")
+    datetime_data = game_data["datetime"]
+    venue_data = game_data.get("venue")
+    if venue_data and venue_data.get("id") is not None:
+        venue_id = int(venue_data["id"])
+        venue_name = str(venue_data["name"])
+    elif game_pk in SPECIAL_VENUES:
+        venue_id, venue_name = SPECIAL_VENUES[game_pk]
+    else:
+        raise FeedValidationError(f"Game {game_pk} has no resolvable venue")
+    resume_date = _parse_date(
+        datetime_data.get("resumeDate") or datetime_data.get("resumedFromDate")
+    )
     return ParsedGame(
         game_pk=game_pk,
         game_date=date.fromisoformat(game_data["datetime"]["officialDate"]),
@@ -248,14 +276,23 @@ def parse_game_feed(
         status=status,
         home_team_id=home_id,
         away_team_id=away_id,
-        venue_id=int(game_data["venue"]["id"]),
+        venue_id=venue_id,
         home_team_runs=int(linescore["teams"]["home"]["runs"]),
         away_team_runs=int(linescore["teams"]["away"]["runs"]),
         innings_played=len(linescore["innings"]),
         doubleheader_code=str(game_data["game"].get("doubleHeader", "N")),
         game_number=int(game_data["game"].get("gameNumber", 1)),
+        scheduled_innings=int(linescore.get("scheduledInnings", 9)),
+        tiebreaker_code=str(game_data["game"].get("tiebreaker", "N")),
+        day_night=datetime_data.get("dayNight"),
+        original_date=_parse_date(datetime_data.get("originalDate")),
+        rescheduled_from_date=_parse_date(
+            datetime_data.get("rescheduledFromDate") or datetime_data.get("rescheduleDate")
+        ),
+        resume_date=resume_date,
+        is_suspended_resumption=resume_date is not None,
         teams=(away_team, home_team),
-        venue_name=str(game_data["venue"]["name"]),
+        venue_name=venue_name,
         players=tuple(players.values()),
         starters=tuple(starters),
         lineups=tuple(lineups),

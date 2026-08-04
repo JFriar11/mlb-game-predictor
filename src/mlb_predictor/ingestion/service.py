@@ -86,6 +86,13 @@ def ingest_game(
             innings_played=parsed.innings_played,
             doubleheader_code=parsed.doubleheader_code,
             game_number=parsed.game_number,
+            scheduled_innings=parsed.scheduled_innings,
+            tiebreaker_code=parsed.tiebreaker_code,
+            day_night=parsed.day_night,
+            original_date=parsed.original_date,
+            rescheduled_from_date=parsed.rescheduled_from_date,
+            resume_date=parsed.resume_date,
+            is_suspended_resumption=parsed.is_suspended_resumption,
             source=SOURCE,
             retrieved_at=retrieved_at,
         )

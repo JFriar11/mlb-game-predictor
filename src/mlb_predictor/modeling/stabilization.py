@@ -48,6 +48,11 @@ def stabilize_small_samples(frame: pd.DataFrame) -> pd.DataFrame:
         "starter_prior_starts",
         "bullpen_prior_outs",
         "bullpen_recent_outs",
+        "prior_season_team_games",
+        "prior_season_lineup_pa",
+        "prior_season_starter_starts",
+        "prior_season_bullpen_outs",
     ):
-        result[column] = np.log1p(result[column])
+        if column in result:
+            result[column] = np.log1p(result[column])
     return result

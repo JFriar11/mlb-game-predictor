@@ -2,18 +2,19 @@ import argparse
 import json
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from mlb_predictor.config import get_settings
 from mlb_predictor.db.models import Game
 from mlb_predictor.db.session import create_db_engine, session_scope
-from mlb_predictor.features.builder import build_2025_features
+from mlb_predictor.features.builder import build_2025_features, build_multiseason_features
 from mlb_predictor.ingestion.cache import RawJsonCache
 from mlb_predictor.ingestion.client import MlbStatsClient
 from mlb_predictor.ingestion.season import ingest_season
 from mlb_predictor.ingestion.service import ingest_game
 from mlb_predictor.logging import configure_logging
 from mlb_predictor.modeling.evaluation import run_sprint3_evaluation
+from mlb_predictor.modeling.multiseason import run_multiseason_evaluation
 from mlb_predictor.reporting import reconstruct_game
 from mlb_predictor.validation.features import audit_features
 from mlb_predictor.validation.games import validate_games
@@ -87,6 +88,11 @@ def _audit_season(season: int, output: Path | None) -> int:
     with session_scope(create_db_engine()) as session:
         audit = audit_season(session, season)
         payload = audit.to_dict()
+    exception_path = PROJECT_ROOT / "data" / "interim" / f"{season}_ingestion_exceptions.json"
+    exceptions = json.loads(exception_path.read_text()) if exception_path.exists() else []
+    payload["exceptions"] = exceptions
+    payload["exception_count"] = len(exceptions)
+    payload["passed"] = payload["passed"] and not exceptions
     rendered = json.dumps(payload, indent=2, default=str)
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -96,17 +102,27 @@ def _audit_season(season: int, output: Path | None) -> int:
     return 0 if audit.passed else 1
 
 
-def _freeze_raw(season: int, output: Path) -> int:
+def _freeze_raw(season: int, output: Path | None) -> int:
     cache = RawJsonCache(PROJECT_ROOT / "data" / "raw" / "mlb_stats_api")
     manifest = cache.build_manifest(season)
-    expected_files = 2431  # one schedule plus 2,430 completed regular-season game feeds
+    output = output or PROJECT_ROOT / "data" / "interim" / f"{season}_raw_manifest.json"
+    with session_scope(create_db_engine()) as session:
+        expected_files = (
+            int(
+                session.scalar(select(func.count()).select_from(Game).where(Game.season == season))
+                or 0
+            )
+            + 1
+        )
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(
         f"Raw manifest: files={manifest['file_count']}, bytes={manifest['total_bytes']}, "
         f"output={output}"
     )
-    return 0 if manifest["file_count"] == expected_files else 1
+    # A cache may intentionally retain non-played schedule entries fetched before their
+    # cancellation status was classified; manifests hash all source objects, including them.
+    return 0 if manifest["file_count"] >= expected_files else 1
 
 
 def _build_features(season: int, feature_version: str) -> int:
@@ -115,6 +131,27 @@ def _build_features(season: int, feature_version: str) -> int:
     with session_scope(create_db_engine()) as session:
         snapshots = build_2025_features(session, feature_version)
     print(f"Built {len(snapshots)} feature rows for {season}, version={feature_version}")
+    return 0
+
+
+def _build_multiseason_features(feature_version: str) -> int:
+    if feature_version == "sprint2_v1":
+        raise ValueError("The immutable Sprint 2 feature version cannot be rebuilt here")
+    variants = {
+        "sprint3_5_v1": {"offseason_decay": 0.5, "carry_prior_history": True},
+        "sprint3_5_nodecay_v1": {"offseason_decay": None, "carry_prior_history": True},
+        "sprint3_5_coldstart_v1": {
+            "offseason_decay": None,
+            "carry_prior_history": False,
+        },
+    }
+    if feature_version not in variants:
+        raise ValueError(f"Unsupported multi-season feature version: {feature_version}")
+    with session_scope(create_db_engine()) as session:
+        snapshots = build_multiseason_features(
+            session, feature_version, **variants[feature_version]
+        )
+    print(f"Built {len(snapshots)} multi-season feature rows, version={feature_version}")
     return 0
 
 
@@ -140,6 +177,15 @@ def _evaluate_baselines(output_dir: Path) -> int:
     return 0
 
 
+def _evaluate_multiseason(output_dir: Path) -> int:
+    with session_scope(create_db_engine()) as session:
+        metadata = run_multiseason_evaluation(session, output_dir)
+    print(f"Selected development model: {metadata['selected_development_model']}")
+    print(f"Artifacts: {output_dir}")
+    print(json.dumps(metadata["model_metrics"], indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -149,22 +195,24 @@ def main() -> int:
     show = subparsers.add_parser("show-game", help="print a reconstructed game")
     show.add_argument("game_pk", type=int, nargs="?")
     season_ingest = subparsers.add_parser(
-        "ingest-season", help="ingest the cached 2025 regular season"
+        "ingest-season", help="ingest one regular season (2021-2025)"
     )
-    season_ingest.add_argument("--season", type=int, default=2025, choices=[2025])
+    season_ingest.add_argument("--season", type=int, required=True, choices=range(2021, 2026))
     season_audit = subparsers.add_parser("audit-season", help="audit the normalized season")
-    season_audit.add_argument("--season", type=int, default=2025, choices=[2025])
+    season_audit.add_argument("--season", type=int, required=True, choices=range(2021, 2026))
     season_audit.add_argument("--output", type=Path)
-    raw_freeze = subparsers.add_parser("freeze-raw", help="checksum the cached 2025 raw layer")
-    raw_freeze.add_argument("--season", type=int, default=2025, choices=[2025])
-    raw_freeze.add_argument(
-        "--output", type=Path, default=Path("data/interim/2025_raw_manifest.json")
-    )
+    raw_freeze = subparsers.add_parser("freeze-raw", help="checksum one season's raw layer")
+    raw_freeze.add_argument("--season", type=int, required=True, choices=range(2021, 2026))
+    raw_freeze.add_argument("--output", type=Path)
     feature_build = subparsers.add_parser(
         "build-features", help="build leakage-controlled 2025 pregame snapshots"
     )
     feature_build.add_argument("--season", type=int, default=2025, choices=[2025])
     feature_build.add_argument("--version", default="sprint2_v1")
+    multiseason_build = subparsers.add_parser(
+        "build-multiseason-features", help="build leakage-safe 2021-2025 snapshots"
+    )
+    multiseason_build.add_argument("--version", default="sprint3_5_v1")
     feature_audit = subparsers.add_parser(
         "audit-features", help="audit feature coverage and as-of cutoffs"
     )
@@ -175,6 +223,12 @@ def main() -> int:
     )
     baseline_evaluation.add_argument(
         "--output-dir", type=Path, default=Path("data/processed/sprint3")
+    )
+    multiseason_evaluation = subparsers.add_parser(
+        "evaluate-multiseason", help="run Sprint 3.5 rolling-origin evaluation"
+    )
+    multiseason_evaluation.add_argument(
+        "--output-dir", type=Path, default=Path("data/processed/sprint3_5")
     )
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
@@ -190,8 +244,12 @@ def main() -> int:
         return _freeze_raw(args.season, args.output)
     if args.command == "build-features":
         return _build_features(args.season, args.version)
+    if args.command == "build-multiseason-features":
+        return _build_multiseason_features(args.version)
     if args.command == "audit-features":
         return _audit_features(args.version, args.output)
     if args.command == "evaluate-baselines":
         return _evaluate_baselines(args.output_dir)
+    if args.command == "evaluate-multiseason":
+        return _evaluate_multiseason(args.output_dir)
     return _show_game(args.game_pk)

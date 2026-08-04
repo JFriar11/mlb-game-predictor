@@ -50,3 +50,24 @@ def test_schedule_discovery_filters_and_deduplicates() -> None:
         ]
     }
     assert discover_completed_game_ids(schedule, 2025) == [1]
+
+
+def test_schedule_discovery_excludes_cancelled_abstract_final() -> None:
+    schedule = {
+        "dates": [
+            {
+                "games": [
+                    {
+                        "gamePk": 9,
+                        "gameType": "R",
+                        "season": "2021",
+                        "status": {
+                            "abstractGameState": "Final",
+                            "codedGameState": "C",
+                        },
+                    }
+                ]
+            }
+        ]
+    }
+    assert discover_completed_game_ids(schedule, 2021) == []

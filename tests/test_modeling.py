@@ -6,6 +6,7 @@ import pytest
 
 from mlb_predictor.modeling.dataset import FEATURE_COLUMNS, model_features
 from mlb_predictor.modeling.models import MODEL_SPECS
+from mlb_predictor.modeling.multiseason import rolling_origin_split
 from mlb_predictor.modeling.splits import DEVELOPMENT_FOLDS, split_frame
 from mlb_predictor.modeling.stabilization import stabilize_small_samples
 
@@ -56,3 +57,17 @@ def test_gradient_boosting_predictions_are_reproducible_and_nonnegative(
     second = spec.factory().fit(features, target).predict(features)
     np.testing.assert_allclose(first, second, rtol=0, atol=0)
     assert np.all(first >= 0)
+
+
+def test_multiseason_rolling_origin_excludes_future_seasons() -> None:
+    frame = pd.DataFrame(
+        {
+            "season": [2021, 2022, 2023, 2024],
+            "game_date": [date(year, 4, 1) for year in range(2021, 2025)],
+            "runs_scored": [1, 2, 3, 4],
+        }
+    )
+    train, evaluation = rolling_origin_split(frame, 2023)
+    assert set(train["season"]) == {2021, 2022}
+    assert set(evaluation["season"]) == {2023}
+    assert 2024 not in set(train["season"])

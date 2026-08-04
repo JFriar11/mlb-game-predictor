@@ -89,6 +89,20 @@ predictions, fitted models, and metadata under `data/processed/sprint3/`. It doe
 rebuild features, mutate the frozen raw layer, or ingest data. See
 `docs/MODEL_2025_AUDIT.md` for the split policy, comparisons, and limitations.
 
+## Sprint 3.5 multi-season foundation
+
+Seasons 2021–2025 are cached and audited independently. After those accepted database
+rows and the three `sprint3_5_*` feature versions exist, reproduce the feature audit and
+rolling-origin model audit with:
+
+```bash
+make sprint3-5-audit
+```
+
+All 2022–2025 evaluation origins are retrospective development evidence. The project
+reserves 2026 live predictions, or another future locked period, for prospective testing.
+See `docs/MULTISEASON_2021_2025_AUDIT.md`.
+
 ## Quality checks
 
 ```bash

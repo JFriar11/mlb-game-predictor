@@ -23,12 +23,12 @@ DEFAULT_OUTS_PER_START = 15.0
 
 @dataclass
 class BattingTotals:
-    pa: int = 0
-    ab: int = 0
-    hits: int = 0
-    walks: int = 0
-    strikeouts: int = 0
-    home_runs: int = 0
+    pa: float = 0
+    ab: float = 0
+    hits: float = 0
+    walks: float = 0
+    strikeouts: float = 0
+    home_runs: float = 0
 
     def add(self, row: PlayerGameBatting) -> None:
         self.pa += row.plate_appearances
@@ -38,15 +38,23 @@ class BattingTotals:
         self.strikeouts += row.strike_outs
         self.home_runs += row.home_runs
 
+    def decay(self, weight: float) -> None:
+        self.pa *= weight
+        self.ab *= weight
+        self.hits *= weight
+        self.walks *= weight
+        self.strikeouts *= weight
+        self.home_runs *= weight
+
 
 @dataclass
 class PitchingTotals:
-    appearances: int = 0
-    outs: int = 0
-    batters_faced: int = 0
-    earned_runs: int = 0
-    walks: int = 0
-    strikeouts: int = 0
+    appearances: float = 0
+    outs: float = 0
+    batters_faced: float = 0
+    earned_runs: float = 0
+    walks: float = 0
+    strikeouts: float = 0
 
     def add(self, row: PlayerGamePitching) -> None:
         self.appearances += 1
@@ -55,6 +63,14 @@ class PitchingTotals:
         self.earned_runs += row.earned_runs
         self.walks += row.base_on_balls
         self.strikeouts += row.strike_outs
+
+    def decay(self, weight: float) -> None:
+        self.appearances *= weight
+        self.outs *= weight
+        self.batters_faced *= weight
+        self.earned_runs *= weight
+        self.walks *= weight
+        self.strikeouts *= weight
 
 
 @dataclass(frozen=True)
@@ -71,7 +87,7 @@ class ReliefAppearance:
     row: PlayerGamePitching
 
 
-def _rate(numerator: int, denominator: int, fallback: float) -> float:
+def _rate(numerator: float, denominator: float, fallback: float) -> float:
     return numerator / denominator if denominator > 0 else fallback
 
 
@@ -82,13 +98,18 @@ def _pitching_rates(totals: PitchingTotals, era_fallback: float) -> tuple[float,
     return era, strikeout_rate, walk_rate
 
 
-def build_2025_features(
-    session: Session, feature_version: str = "sprint2_v1"
+def build_features(
+    session: Session,
+    seasons: tuple[int, ...],
+    feature_version: str,
+    *,
+    offseason_decay: float | None = None,
+    carry_prior_history: bool = True,
 ) -> list[PregameFeatureSnapshot]:
     """Build two rows per game using only games from strictly earlier calendar dates."""
     games = list(
         session.scalars(
-            select(Game).where(Game.season == 2025).order_by(Game.game_date, Game.game_pk)
+            select(Game).where(Game.season.in_(seasons)).order_by(Game.game_date, Game.game_pk)
         )
     )
     game_ids = [game.game_pk for game in games]
@@ -132,8 +153,55 @@ def build_2025_features(
     snapshots: list[PregameFeatureSnapshot] = []
     max_source_date: date | None = None
     created_at = datetime.now(UTC)
+    active_season: int | None = None
+    prior_team_history: dict[int, list[TeamOutcome]] = defaultdict(list)
+    prior_batter_pa: dict[int, int] = {}
+    prior_starter_starts: dict[int, int] = {}
+    prior_bullpen: dict[int, PitchingTotals] = defaultdict(PitchingTotals)
+    prior_bullpen_outs: dict[int, int] = {}
 
     for game_date in sorted(games_by_date):
+        season = games_by_date[game_date][0].season
+        if active_season is not None and season != active_season:
+            prior_team_history = defaultdict(
+                list, {team_id: list(values) for team_id, values in team_history.items()}
+            )
+            prior_batter_pa = {
+                player_id: round(totals.pa) for player_id, totals in batter_history.items()
+            }
+            prior_starter_starts = {
+                player_id: round(totals.appearances)
+                for player_id, totals in starter_history.items()
+            }
+            prior_bullpen = defaultdict(PitchingTotals)
+            for appearance in relief_history:
+                prior_bullpen[appearance.team_id].add(appearance.row)
+            prior_bullpen_outs = {
+                team_id: round(totals.outs) for team_id, totals in prior_bullpen.items()
+            }
+            team_history = defaultdict(list)
+            relief_history = []
+            last_game_date = {}
+            if offseason_decay is not None:
+                for totals in batter_history.values():
+                    totals.decay(offseason_decay)
+                for totals in starter_history.values():
+                    totals.decay(offseason_decay)
+                league_batting.decay(offseason_decay)
+                league_starters.decay(offseason_decay)
+                for totals in prior_bullpen.values():
+                    totals.decay(offseason_decay)
+            if not carry_prior_history:
+                prior_team_history = defaultdict(list)
+                prior_batter_pa = {}
+                prior_starter_starts = {}
+                prior_bullpen = defaultdict(PitchingTotals)
+                prior_bullpen_outs = {}
+                batter_history = defaultdict(BattingTotals)
+                starter_history = defaultdict(PitchingTotals)
+                league_batting = BattingTotals()
+                league_starters = PitchingTotals()
+        active_season = season
         prior_team_outcomes = [item for values in team_history.values() for item in values]
         league_runs = (
             sum(item.runs for item in prior_team_outcomes) / len(prior_team_outcomes)
@@ -164,11 +232,17 @@ def build_2025_features(
             ):
                 fallback_count = 0
                 history = team_history[offense_id]
+                prior_team = prior_team_history[offense_id]
                 if history:
                     recent = history[-10:]
                     runs_10 = sum(item.runs for item in recent) / len(recent)
                     allowed_10 = sum(item.runs_allowed for item in recent) / len(recent)
                     runs_season = sum(item.runs for item in history) / len(history)
+                elif prior_team:
+                    recent = prior_team[-10:]
+                    runs_10 = sum(item.runs for item in recent) / len(recent)
+                    allowed_10 = sum(item.runs_allowed for item in recent) / len(recent)
+                    runs_season = sum(item.runs for item in prior_team) / len(prior_team)
                 else:
                     runs_10 = allowed_10 = runs_season = league_runs
                     fallback_count += 1
@@ -219,6 +293,8 @@ def build_2025_features(
                 bullpen = PitchingTotals()
                 for item in opponent_relief:
                     bullpen.add(item.row)
+                if not opponent_relief and prior_bullpen[opponent_id].outs:
+                    bullpen = prior_bullpen[opponent_id]
                 league_bullpen = PitchingTotals()
                 for item in league_relief:
                     league_bullpen.add(item.row)
@@ -258,22 +334,31 @@ def build_2025_features(
                         team_runs_avg_10=runs_10,
                         team_runs_allowed_avg_10=allowed_10,
                         team_runs_avg_season=runs_season,
-                        lineup_prior_pa=lineup_pa,
+                        lineup_prior_pa=round(lineup_pa),
                         lineup_on_base_rate=sum(on_base_rates) / len(on_base_rates),
                         lineup_strikeout_rate=sum(strikeout_rates) / len(strikeout_rates),
                         lineup_home_run_rate=sum(home_run_rates) / len(home_run_rates),
-                        starter_prior_starts=starter_totals.appearances,
+                        starter_prior_starts=round(starter_totals.appearances),
                         starter_era=starter_era,
                         starter_strikeout_rate=starter_k,
                         starter_walk_rate=starter_bb,
                         starter_outs_per_start=starter_outs,
-                        bullpen_prior_outs=bullpen.outs,
+                        bullpen_prior_outs=round(bullpen.outs),
                         bullpen_era_30d=bullpen_era,
                         bullpen_strikeout_rate_30d=bullpen_k,
                         bullpen_walk_rate_30d=bullpen_bb,
                         bullpen_recent_outs=recent_outs,
                         days_rest=days_rest,
                         fallback_count=fallback_count,
+                        history_decay=offseason_decay or 1.0,
+                        prior_season_team_games=len(prior_team),
+                        prior_season_lineup_pa=sum(
+                            prior_batter_pa.get(player_id, 0) for player_id in lineup_ids
+                        ),
+                        prior_season_starter_starts=prior_starter_starts.get(
+                            opponent_starter_id, 0
+                        ),
+                        prior_season_bullpen_outs=prior_bullpen_outs.get(opponent_id, 0),
                         created_at=created_at,
                     )
                 )
@@ -308,3 +393,25 @@ def build_2025_features(
     session.add_all(snapshots)
     session.flush()
     return snapshots
+
+
+def build_2025_features(
+    session: Session, feature_version: str = "sprint2_v1"
+) -> list[PregameFeatureSnapshot]:
+    return build_features(session, (2025,), feature_version)
+
+
+def build_multiseason_features(
+    session: Session,
+    feature_version: str = "sprint3_5_v1",
+    *,
+    offseason_decay: float | None = 0.5,
+    carry_prior_history: bool = True,
+) -> list[PregameFeatureSnapshot]:
+    return build_features(
+        session,
+        (2021, 2022, 2023, 2024, 2025),
+        feature_version,
+        offseason_decay=offseason_decay,
+        carry_prior_history=carry_prior_history,
+    )

@@ -3,18 +3,15 @@ from dataclasses import asdict, dataclass
 from datetime import date
 from typing import Any
 
-from sqlalchemy import distinct, func, select
+from sqlalchemy import distinct, func, select, union
 from sqlalchemy.orm import Session
 
 from mlb_predictor.db.models import (
     Game,
     GameStartingLineup,
     GameStartingPitcher,
-    Player,
     PlayerGameBatting,
     PlayerGamePitching,
-    Team,
-    Venue,
 )
 
 
@@ -37,13 +34,18 @@ class SeasonAudit:
     max_games_per_team: int
     batting_run_discrepancies: int
     pitching_run_discrepancies: int
+    duplicate_game_ids: int
+    seven_inning_scheduled_games: int
+    extra_inning_games: int
+    doubleheader_games: int
+    suspended_resumptions: int
     incomplete_starter_games: tuple[int, ...]
     incomplete_lineup_sides: tuple[dict[str, Any], ...]
 
     @property
     def passed(self) -> bool:
         return (
-            self.games == 2430
+            self.games > 0
             and self.teams == 30
             and self.starters == self.games * 2
             and self.lineup_entries == self.games * 18
@@ -51,8 +53,8 @@ class SeasonAudit:
             and not self.incomplete_lineup_sides
             and self.games_with_batting == self.games
             and self.games_with_pitching == self.games
-            and self.min_games_per_team == 162
-            and self.max_games_per_team == 162
+            and self.min_games_per_team >= 161
+            and self.max_games_per_team <= 162
             and self.batting_run_discrepancies == 0
             and self.pitching_run_discrepancies == 0
         )
@@ -147,14 +149,22 @@ def audit_season(session: Session, season: int = 2025) -> SeasonAudit:
         or pitching_runs.get((game.game_pk, False)) != game.home_team_runs
         for game in season_games
     )
+    season_player_ids = union(
+        select(GameStartingLineup.player_id).where(GameStartingLineup.game_pk.in_(game_ids)),
+        select(GameStartingPitcher.pitcher_id).where(GameStartingPitcher.game_pk.in_(game_ids)),
+        select(PlayerGameBatting.player_id).where(PlayerGameBatting.game_pk.in_(game_ids)),
+        select(PlayerGamePitching.player_id).where(PlayerGamePitching.game_pk.in_(game_ids)),
+    ).subquery()
     return SeasonAudit(
         season=season,
         games=int(games),
         first_game_date=first_date,
         last_game_date=last_date,
-        teams=int(session.scalar(select(func.count()).select_from(Team)) or 0),
-        venues=int(session.scalar(select(func.count()).select_from(Venue)) or 0),
-        players=int(session.scalar(select(func.count()).select_from(Player)) or 0),
+        teams=len(team_games),
+        venues=int(
+            session.scalar(select(func.count(distinct(Game.venue_id))).where(game_filter)) or 0
+        ),
+        players=int(session.scalar(select(func.count()).select_from(season_player_ids)) or 0),
         starters=int(
             session.scalar(
                 select(func.count())
@@ -207,6 +217,35 @@ def audit_season(session: Session, season: int = 2025) -> SeasonAudit:
         max_games_per_team=max(team_games.values(), default=0),
         batting_run_discrepancies=batting_discrepancies,
         pitching_run_discrepancies=pitching_discrepancies,
+        duplicate_game_ids=int(games) - len({game.game_pk for game in season_games}),
+        seven_inning_scheduled_games=int(
+            session.scalar(
+                select(func.count())
+                .select_from(Game)
+                .where(game_filter, Game.scheduled_innings == 7)
+            )
+            or 0
+        ),
+        extra_inning_games=sum(
+            game.innings_played > game.scheduled_innings
+            for game in session.scalars(select(Game).where(game_filter))
+        ),
+        doubleheader_games=int(
+            session.scalar(
+                select(func.count())
+                .select_from(Game)
+                .where(game_filter, Game.doubleheader_code != "N")
+            )
+            or 0
+        ),
+        suspended_resumptions=int(
+            session.scalar(
+                select(func.count())
+                .select_from(Game)
+                .where(game_filter, Game.is_suspended_resumption)
+            )
+            or 0
+        ),
         incomplete_starter_games=incomplete_starters,
         incomplete_lineup_sides=incomplete_lineups,
     )

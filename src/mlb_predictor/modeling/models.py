@@ -50,8 +50,8 @@ class TeamRollingAverageModel:
         return features["team_runs_avg_10"].to_numpy(dtype=float).clip(min=1e-6)
 
 
-def _preprocessor() -> ColumnTransformer:
-    numeric = [column for column in FEATURE_COLUMNS if column != "venue_id"]
+def _preprocessor(feature_columns: list[str] = FEATURE_COLUMNS) -> ColumnTransformer:
+    numeric = [column for column in feature_columns if column != "venue_id"]
     return ColumnTransformer(
         [
             ("numeric", StandardScaler(), numeric),
@@ -69,8 +69,10 @@ class SklearnCountModel:
     distribution = "poisson"
     dispersion: float | None = None
 
-    def __init__(self, estimator: object) -> None:
-        self.pipeline = Pipeline([("preprocess", _preprocessor()), ("model", estimator)])
+    def __init__(self, estimator: object, feature_columns: list[str] = FEATURE_COLUMNS) -> None:
+        self.pipeline = Pipeline(
+            [("preprocess", _preprocessor(feature_columns)), ("model", estimator)]
+        )
 
     def fit(self, features: pd.DataFrame, target: pd.Series) -> "SklearnCountModel":
         self.pipeline.fit(features, target)
@@ -83,8 +85,8 @@ class SklearnCountModel:
 class NegativeBinomialModel:
     distribution = "negative_binomial"
 
-    def __init__(self) -> None:
-        self.preprocessor = _preprocessor()
+    def __init__(self, feature_columns: list[str] = FEATURE_COLUMNS) -> None:
+        self.preprocessor = _preprocessor(feature_columns)
         self.dispersion: float | None = None
 
     def fit(self, features: pd.DataFrame, target: pd.Series) -> "NegativeBinomialModel":
@@ -100,7 +102,7 @@ class NegativeBinomialModel:
             values,
             design,
             family=sm.families.NegativeBinomial(alpha=self.dispersion),
-        ).fit(maxiter=200)
+        ).fit_regularized(alpha=0.01, L1_wt=0.0, maxiter=500)
         return self
 
     def predict(self, features: pd.DataFrame) -> np.ndarray:
@@ -155,3 +157,40 @@ MODEL_SPECS = (
         "Poisson loss with log link",
     ),
 )
+
+
+def multiseason_model_specs(feature_columns: list[str]) -> tuple[ModelSpec, ...]:
+    """Return the required Sprint 3.5 comparisons for one explicit feature treatment."""
+    return (
+        ModelSpec("league_average", LeagueAverageModel, False, "positive training-target mean"),
+        ModelSpec("team_rolling_average", TeamRollingAverageModel, False, "positive rolling mean"),
+        ModelSpec(
+            "poisson_stabilized",
+            lambda: SklearnCountModel(PoissonRegressor(alpha=0.01, max_iter=1000), feature_columns),
+            True,
+            "Poisson log link",
+        ),
+        ModelSpec(
+            "negative_binomial_stabilized",
+            lambda: NegativeBinomialModel(feature_columns),
+            True,
+            "negative-binomial log link",
+        ),
+        ModelSpec(
+            "gradient_boosting_stabilized",
+            lambda: SklearnCountModel(
+                HistGradientBoostingRegressor(
+                    loss="poisson",
+                    learning_rate=0.05,
+                    max_iter=200,
+                    max_leaf_nodes=15,
+                    min_samples_leaf=30,
+                    l2_regularization=1.0,
+                    random_state=RANDOM_SEED,
+                ),
+                feature_columns,
+            ),
+            True,
+            "Poisson loss with log link",
+        ),
+    )

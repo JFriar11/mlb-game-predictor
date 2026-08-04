@@ -66,9 +66,9 @@ class MlbStatsClient:
         return payload
 
     def get_regular_season_schedule(self, season: int) -> dict[str, Any]:
-        if season != 2025:
-            raise ValueError("Sprint 1 schedule discovery is restricted to season 2025")
-        LOGGER.info("fetching regular-season schedule")
+        if season not in range(2021, 2026):
+            raise ValueError("Historical ingestion is restricted to seasons 2021-2025")
+        LOGGER.info("fetching regular-season schedule", extra={"season": season})
         return self._get_json(
             "/v1/schedule",
             {

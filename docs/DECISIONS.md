@@ -151,3 +151,34 @@ the best nonconstant model; do not promote complexity based on the final test.
 
 **Reason:** The selection rule includes simple baselines, and the final test cannot be
 used to revise model choice after it is opened.
+
+## D018 — Season-partitioned expansion and cancelled games
+
+**Date:** 2026-08-03
+
+**Decision:** Cache and hash each season separately. Normalize only regular-season feeds
+with coded state `F`; retain but do not normalize cancelled schedule entries.
+
+**Reason:** MLB can label cancelled entries abstractly Final. Coded status distinguishes
+played games without deleting source evidence.
+
+## D019 — Offseason history treatment
+
+**Date:** 2026-08-03
+
+**Decision:** `sprint3_5_v1` carries MLB player history across teams and missing seasons
+with fixed 0.5 decay at each offseason, carries the immediately previous team season for
+Opening Day, and records prior-history sample provenance. No-decay and cold-start controls
+are separate feature versions.
+
+**Reason:** Versioned controls make the value of history and decay testable without future
+assignments, target-season totals, or silent changes to `sprint2_v1`.
+
+## D020 — Prospective evaluation reserve
+
+**Date:** 2026-08-03
+
+**Decision:** Treat every 2021–2025 result as development/backtesting evidence. Reserve
+2026 live predictions, or another future locked period, for prospective evaluation.
+
+**Reason:** The team has already inspected and made decisions using 2025 results.

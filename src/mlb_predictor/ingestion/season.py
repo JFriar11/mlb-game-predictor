@@ -36,6 +36,7 @@ def discover_completed_game_ids(schedule: dict[str, Any], season: int) -> list[i
         if game.get("gameType") == "R"
         and str(game.get("season")) == str(season)
         and (game.get("status") or {}).get("abstractGameState") == "Final"
+        and (game.get("status") or {}).get("codedGameState", "F") == "F"
     }
     return sorted(ids)
 
@@ -47,8 +48,8 @@ def ingest_season(
     season: int,
     exception_path: Path,
 ) -> SeasonIngestionResult:
-    if season != 2025:
-        raise ValueError("Sprint 1 ingestion is restricted to season 2025")
+    if season not in range(2021, 2026):
+        raise ValueError("Historical ingestion is restricted to seasons 2021-2025")
     schedule = cache.schedule(season, lambda: client.get_regular_season_schedule(season))
     game_ids = discover_completed_game_ids(schedule, season)
     exceptions: list[IngestionException] = []
