@@ -13,6 +13,7 @@ from mlb_predictor.ingestion.client import MlbStatsClient
 from mlb_predictor.ingestion.season import ingest_season
 from mlb_predictor.ingestion.service import ingest_game
 from mlb_predictor.logging import configure_logging
+from mlb_predictor.modeling.evaluation import run_sprint3_evaluation
 from mlb_predictor.reporting import reconstruct_game
 from mlb_predictor.validation.features import audit_features
 from mlb_predictor.validation.games import validate_games
@@ -130,6 +131,15 @@ def _audit_features(feature_version: str, output: Path | None) -> int:
     return 0 if audit.passed else 1
 
 
+def _evaluate_baselines(output_dir: Path) -> int:
+    with session_scope(create_db_engine()) as session:
+        metadata = run_sprint3_evaluation(session, output_dir)
+    print(f"Selected on development folds: {metadata['selected_model']}")
+    print(f"Artifacts: {output_dir}")
+    print(json.dumps(metadata["final_test_metrics"], indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -160,6 +170,12 @@ def main() -> int:
     )
     feature_audit.add_argument("--version", default="sprint2_v1")
     feature_audit.add_argument("--output", type=Path)
+    baseline_evaluation = subparsers.add_parser(
+        "evaluate-baselines", help="run Sprint 3 chronological baseline evaluation"
+    )
+    baseline_evaluation.add_argument(
+        "--output-dir", type=Path, default=Path("data/processed/sprint3")
+    )
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
@@ -176,4 +192,6 @@ def main() -> int:
         return _build_features(args.season, args.version)
     if args.command == "audit-features":
         return _audit_features(args.version, args.output)
+    if args.command == "evaluate-baselines":
+        return _evaluate_baselines(args.output_dir)
     return _show_game(args.game_pk)

@@ -60,3 +60,35 @@ def test_features_use_only_strictly_prior_dates(
         )
         is not None
     )
+
+
+def test_target_game_outcome_does_not_change_its_features(
+    session: Session, game_feed: dict[str, Any]
+) -> None:
+    ingest_game(session, StubClient(game_feed), 999001)
+    original = build_2025_features(session, "target_invariance_v1")
+    original_values = {
+        item.is_home: (
+            item.team_runs_avg_10,
+            item.lineup_on_base_rate,
+            item.starter_era,
+            item.bullpen_era_30d,
+            item.fallback_count,
+        )
+        for item in original
+    }
+    game_feed["liveData"]["linescore"]["teams"]["home"]["runs"] = 19
+    game_feed["liveData"]["linescore"]["teams"]["away"]["runs"] = 17
+    ingest_game(session, StubClient(game_feed), 999001)
+    rebuilt = build_2025_features(session, "target_invariance_v1")
+    rebuilt_values = {
+        item.is_home: (
+            item.team_runs_avg_10,
+            item.lineup_on_base_rate,
+            item.starter_era,
+            item.bullpen_era_30d,
+            item.fallback_count,
+        )
+        for item in rebuilt
+    }
+    assert rebuilt_values == original_values

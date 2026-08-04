@@ -118,3 +118,36 @@ versions prevent silent changes from invalidating later chronological comparison
 **Reason:** One repository-owned workflow avoids machine-specific Homebrew service state
 and makes the acceptance sequence reviewable. The local Compose credentials are explicitly
 development-only defaults; real credentials stay in ignored environment configuration.
+
+## D015 — One-season chronological development protocol
+
+**Date:** 2026-08-03
+
+**Decision:** Use March 18–May 31 as warm-up/initial training, expanding June, July, and
+August validation origins for selection, and September 1–28 as an untouched final test.
+Select only on aggregate development Poisson deviance.
+
+**Reason:** This preserves ordering and gives repeated in-season evidence while only 2025
+exists. September is not a final estimate of generalization across seasons.
+
+## D016 — Immutable feature input and small-sample treatment
+
+**Date:** 2026-08-03
+
+**Decision:** Sprint 3 consumes `sprint2_v1` unchanged. Raw models see persisted values;
+stabilized models apply fixed-prior, sample-size-weighted shrinkage, clipping, and log
+sample sizes inside the modeling pipeline. Corrections require a new feature version.
+
+**Reason:** Downstream stabilization permits a fair chronological raw-versus-treated
+comparison without silently changing the accepted feature contract.
+
+## D017 — Baseline remains the selected model
+
+**Date:** 2026-08-03
+
+**Decision:** Retain league average as the Sprint 3 selected model because it had the
+lowest aggregate development Poisson deviance. Report stabilized Poisson separately as
+the best nonconstant model; do not promote complexity based on the final test.
+
+**Reason:** The selection rule includes simple baselines, and the final test cannot be
+used to revise model choice after it is opened.

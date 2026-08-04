@@ -159,3 +159,30 @@ Do not begin Sprint 2 feature engineering until the user reviews the 2025 season
 ### Stop condition
 
 Do not begin Sprint 3 baseline model training until the user reviews the feature audit.
+
+## Completed plan: Sprint 3 — Baseline forecasting and chronological evaluation
+
+**Status:** Completed 2026-08-03. Awaiting review before any Sprint 4 work.
+
+### Completion record
+
+- Consumed `sprint2_v1` without rebuilding or changing the feature store or frozen raw data.
+- Produced a deterministic 4,860-row stacked team-game dataset with `runs_scored` target.
+- Used expanding June, July, and August development folds after a March 18–May 31 warm-up,
+  then opened an untouched September 1–28 test block only after development selection.
+- Compared league-average, team rolling-average, raw and stabilized Poisson, stabilized
+  negative-binomial, and stabilized histogram gradient-boosting models.
+- Evaluated MAE, RMSE, mean bias, Poisson deviance, and distribution-appropriate NLL.
+- Selected the league-average baseline on development Poisson deviance. Stabilized Poisson
+  was the best nonconstant model and improved materially over raw Poisson, but did not beat
+  the simple baseline.
+- Added month, home/away, fallback, starter-history, and predicted-range error slices.
+- Saved the dataset, predictions, models, configuration, dates, seed, dependencies,
+  metrics, and limitations under ignored `data/processed/sprint3/`.
+- Added split, fitting-boundary, reproducibility, nonnegative-prediction, and target-outcome
+  invariance tests. Full results are in `docs/MODEL_2025_AUDIT.md`.
+
+### Stop condition
+
+Do not begin advanced lineup weighting, Statcast, weather, pitcher clustering, simulation,
+API, dashboard, or other Sprint 4+ work until the user reviews this Sprint 3 audit.

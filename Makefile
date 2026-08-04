@@ -4,10 +4,16 @@ BIN := $(VENV)/bin
 SPRINT0_DATABASE_URL := postgresql+psycopg://mlb:mlb@localhost:55432/mlb_predictor
 export MLB_DATABASE_URL := $(SPRINT0_DATABASE_URL)
 
-.PHONY: sprint0-acceptance install postgres quality migrate ingest validate show
+.PHONY: sprint0-acceptance sprint3-audit install postgres quality migrate ingest validate show
 
 # One-command Sprint 0 reproduction from a fresh clone (with Docker running).
 sprint0-acceptance: install postgres quality migrate ingest validate show
+
+# Reproduce Sprint 3 from an accepted database containing sprint2_v1.
+sprint3-audit: install postgres quality migrate
+	$(BIN)/mlb-predictor audit-features --version sprint2_v1
+	LOKY_MAX_CPU_COUNT=1 $(BIN)/mlb-predictor evaluate-baselines \
+		--output-dir data/processed/sprint3
 
 install:
 	$(PYTHON) -m venv $(VENV)

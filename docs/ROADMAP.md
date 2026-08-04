@@ -8,13 +8,13 @@ retractable-roof, and Cubs cases. Acceptance passed after an idempotent rerun.
 
 ## Sprint 1 — 2025 historical data foundation
 
-**Completed 2026-08-03; awaiting review before Sprint 2.** Ingested all 2,430 games with
+**Completed and approved 2026-08-03.** Ingested all 2,430 games with
 starters, lineups, player-game batting, player-game pitching, raw caching, an idempotent
 rerun, and a passing season audit. See `docs/SEASON_2025_AUDIT.md`.
 
 ## Sprint 2 — Leakage-safe feature engine
 
-**Completed 2026-08-03; awaiting review before Sprint 3.** Built and audited 4,860
+**Completed and approved 2026-08-03.** Built and audited 4,860
 versioned pregame feature rows with strict prior-date cutoffs and explicit fallbacks. See
 `docs/FEATURE_2025_AUDIT.md`.
 
@@ -31,6 +31,11 @@ Initial features:
 - Rest and schedule context
 
 ## Sprint 3 — Baseline forecasting system
+
+**Completed 2026-08-03; awaiting review before Sprint 4.** Chronologically compared six
+baseline/model variants on immutable `sprint2_v1`. The league-average baseline won the
+development selection metric; stabilized Poisson was the best nonconstant model. See
+`docs/MODEL_2025_AUDIT.md`.
 
 Build and compare:
 

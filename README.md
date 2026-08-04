@@ -74,6 +74,21 @@ export MLB_DATABASE_URL=postgresql+psycopg://mlb:mlb@localhost:55432/mlb_predict
 The builder emits two rows per game and excludes all same-day outcomes. Definitions,
 fallbacks, observed ranges, and limitations are in `docs/FEATURE_2025_AUDIT.md`.
 
+## Sprint 3 chronological baseline evaluation
+
+With the accepted 2025 database and immutable `sprint2_v1` snapshots present, reproduce
+the complete modeling audit with:
+
+```bash
+make sprint3-audit
+```
+
+This installs bounded dependencies, starts PostgreSQL, runs Ruff, formatting, pytest,
+and Alembic checks, re-audits `sprint2_v1`, then writes the ignored modeling dataset,
+predictions, fitted models, and metadata under `data/processed/sprint3/`. It does not
+rebuild features, mutate the frozen raw layer, or ingest data. See
+`docs/MODEL_2025_AUDIT.md` for the split policy, comparisons, and limitations.
+
 ## Quality checks
 
 ```bash

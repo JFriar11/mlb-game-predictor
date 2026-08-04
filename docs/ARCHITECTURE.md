@@ -213,6 +213,12 @@ Fields include:
 
 This structure allows consistent treatment of home and away offenses and can later support one shared run model.
 
+Sprint 3 implements this as a reproducible 4,860-row dataset read from immutable
+`sprint2_v1`. Modeling-only stabilization, chronological folds, six count-model
+specifications, common metrics, and artifact writing live under `mlb_predictor.modeling`.
+Generated data and model files are ignored; metadata records feature version, dates,
+configuration, seed, dependencies, and results. No output is written into frozen layers.
+
 ## Specialized-model dependency order
 
 1. Build pregame bullpen usage state.
