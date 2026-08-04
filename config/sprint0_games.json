@@ -1,0 +1,10 @@
+{
+  "description": "Exactly five completed 2025 regular-season games selected from bounded schedule metadata.",
+  "games": [
+    {"game_pk": 778557, "reason": "ordinary nine-inning Opening Day game"},
+    {"game_pk": 778555, "reason": "ten-inning game"},
+    {"game_pk": 778190, "reason": "first game of a traditional doubleheader"},
+    {"game_pk": 778559, "reason": "retractable-roof venue (Daikin Park)"},
+    {"game_pk": 778552, "reason": "Chicago Cubs at retractable-roof Chase Field"}
+  ]
+}

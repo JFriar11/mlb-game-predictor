@@ -1,0 +1,79 @@
+# Decision Log
+
+Record important project decisions here. Add dates and reasons.
+
+## D001 — Prediction timing
+
+**Decision:** The primary system predicts approximately 30 minutes before first pitch after confirmed starting lineups are available.
+
+**Reason:** Lineups materially affect offensive quality and can usually be incorporated close to game time.
+
+## D002 — Historical lineup reconstruction
+
+**Decision:** Use actual historical starting lineups for the first version.
+
+**Constraint:** Exact proof that each lineup was publicly confirmed at T-minus-30 may be unavailable.
+
+**Safeguard:** Use only starting players and batting order. Exclude substitutions and target-game performance. Describe the model as a confirmed-lineup historical reconstruction.
+
+## D003 — Initial game scope
+
+**Decision:** Begin with regular-season games. Exclude postseason from the initial model.
+
+**Reason:** Postseason pitcher usage and roster behavior differ.
+
+## D004 — Initial season
+
+**Decision:** Prove ingestion on five games, then ingest 2025, then expand toward 2021–2025.
+
+**Reason:** This limits wasted work and exposes ID, lineup, starter, doubleheader, and venue issues early.
+
+## D005 — System of record
+
+**Decision:** Use PostgreSQL for normalized historical entities, features, and predictions. Use Parquet for large pitch-level raw datasets.
+
+## D006 — Evaluation
+
+**Decision:** Use chronological evaluation only for model selection and final reporting.
+
+## D007 — Development order
+
+**Decision:** Correct data reconstruction and leakage-safe baselines come before advanced matchup features, simulation, dashboard work, or cloud deployment.
+
+## D008 — Sprint 0 ingestion boundary
+
+**Date:** 2026-08-03
+
+**Decision:** The Sprint 0 CLI accepts only the exactly five unique game IDs stored in a
+reviewable manifest. Each game is a separate transaction, and reruns replace its starter
+and lineup children while upserting stable-ID entities.
+
+**Reason:** An explicit manifest makes the acceptance sample reproducible, prevents an
+accidental season download, and provides straightforward idempotency when MLB corrects a
+historical feed.
+
+## D009 — Cross-row validation
+
+**Date:** 2026-08-03
+
+**Decision:** Enforce scalar and uniqueness invariants in PostgreSQL and check completeness
+(two starter sides and two complete 1–9 lineups) in an acceptance validator.
+
+**Reason:** SQL checks and unique constraints reliably reject invalid rows, while exact
+cross-row cardinality is clearer and easier to audit in application validation.
+
+## D010 — Supported local PostgreSQL and reproducibility workflow
+
+**Date:** 2026-08-03
+
+**Decision:** Docker Compose is the sole supported local PostgreSQL setup. A fresh clone
+can run `make sprint0-acceptance`, which creates an isolated Python environment, installs
+dependencies, health-checks PostgreSQL, runs quality and migration checks, ingests the
+five-game manifest twice, validates it, and prints one reconstruction.
+
+The Make workflow explicitly exports the Compose database URL; ignored developer `.env`
+files cannot redirect the acceptance run to another local database.
+
+**Reason:** One repository-owned workflow avoids machine-specific Homebrew service state
+and makes the acceptance sequence reviewable. The local Compose credentials are explicitly
+development-only defaults; real credentials stay in ignored environment configuration.
