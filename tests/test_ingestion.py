@@ -3,7 +3,13 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from mlb_predictor.db.models import Game, GameStartingLineup, GameStartingPitcher
+from mlb_predictor.db.models import (
+    Game,
+    GameStartingLineup,
+    GameStartingPitcher,
+    PlayerGameBatting,
+    PlayerGamePitching,
+)
 from mlb_predictor.ingestion.service import ingest_game
 
 
@@ -24,3 +30,5 @@ def test_ingestion_is_idempotent(session: Session, game_feed: dict[str, Any]) ->
     assert session.scalar(select(func.count()).select_from(Game)) == 1
     assert session.scalar(select(func.count()).select_from(GameStartingPitcher)) == 2
     assert session.scalar(select(func.count()).select_from(GameStartingLineup)) == 18
+    assert session.scalar(select(func.count()).select_from(PlayerGameBatting)) == 18
+    assert session.scalar(select(func.count()).select_from(PlayerGamePitching)) == 2

@@ -44,6 +44,23 @@ export MLB_DATABASE_URL=postgresql+psycopg://mlb:mlb@localhost:55432/mlb_predict
 The ingestion command is deliberately bound to the five IDs in
 `config/sprint0_games.json`; it cannot trigger a season download.
 
+## 2025 historical layer
+
+After Sprint 0 approval, the 2025 regular season can be reproduced and audited with:
+
+```bash
+export MLB_DATABASE_URL=postgresql+psycopg://mlb:mlb@localhost:55432/mlb_predictor
+.venv-sprint0/bin/alembic upgrade head
+.venv-sprint0/bin/mlb-predictor ingest-season --season 2025
+.venv-sprint0/bin/mlb-predictor audit-season --season 2025 \
+  --output data/interim/2025_season_audit.json
+.venv-sprint0/bin/mlb-predictor freeze-raw --season 2025 \
+  --output data/interim/2025_raw_manifest.json
+```
+
+The ingestion is restricted to 2025, caches responses under ignored `data/raw/`, and is
+safe to rerun. The accepted counts and limitations are in `docs/SEASON_2025_AUDIT.md`.
+
 ## Quality checks
 
 ```bash

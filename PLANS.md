@@ -4,7 +4,7 @@ Use this file for substantial multi-step work. Keep the active plan updated as w
 
 ## Completed plan: Sprint 0 — Foundation and controlled ingestion
 
-**Status:** Completed 2026-08-03. Awaiting user review before Sprint 1.
+**Status:** Completed 2026-08-03 and approved for Sprint 1.
 
 **Cleanup/reproducibility pass:** Completed 2026-08-03. The legacy Python 3.10
 environment was removed from the Git index without deleting its local files. Docker
@@ -106,7 +106,9 @@ Do not ingest a full season until the user reviews the five-game audit.
 - The legacy Python 3.10 `.venv` remains on the developer's disk but has been removed from
   Git's index and is ignored. Reproduction uses the separate ignored `.venv-sprint0`.
 
-## Next plan: Sprint 1 — One-season historical foundation (blocked on review)
+## Completed plan: Sprint 1 — One-season historical foundation
+
+**Status:** Completed 2026-08-03. Awaiting review before Sprint 2 feature engineering.
 
 After Sprint 0 approval:
 
@@ -116,3 +118,21 @@ After Sprint 0 approval:
 4. Add raw-source caching.
 5. Produce a season data-audit notebook or report.
 6. Freeze the raw historical layer before feature engineering.
+
+### Completion record
+
+- Added Alembic revision `0002` and SQLAlchemy models for player-game batting and pitching.
+- Added gzip-compressed atomic caching for the schedule and each game feed.
+- Restricted discovery and the CLI to the 2025 completed MLB regular season.
+- Ingested 2,430 games with zero exceptions, then reran all 2,430 from cache with stable counts.
+- Stored 50,887 player-game batting and 20,865 player-game pitching records.
+- Verified 30 teams at 162 games each, 4,860 starters, and 43,740 lineup entries.
+- Reconciled batting runs and pitching runs allowed to every final team score with zero differences.
+- Created a deterministic SHA-256 manifest for 2,431 raw cache objects.
+- Published the detailed results and limitations in `docs/SEASON_2025_AUDIT.md`.
+- Final verification: Ruff passed, format check passed, 10 tests passed, Alembic reported
+  no pending operations, and the expanded season audit passed.
+
+### Stop condition
+
+Do not begin Sprint 2 feature engineering until the user reviews the 2025 season audit.

@@ -167,8 +167,20 @@ duplicates; the validator checks cross-row completeness that a row constraint ca
 - Git: code, migrations, configuration templates, documentation.
 - Never commit raw data, secrets, model binaries, or database dumps by default.
 
-Raw response caching is intentionally deferred to Sprint 1. Sprint 0 retains normalized
-source and retrieval timestamps but cannot replay the original API payload offline.
+Sprint 0 records retain normalized source and retrieval timestamps. Sprint 1 adds the raw
+response cache needed to replay the 2025 ingestion offline.
+
+## Sprint 1 historical layer
+
+Sprint 1 adds `player_game_batting` and `player_game_pitching` to PostgreSQL. The source
+cache stores gzip-compressed schedule and completed-game JSON under the ignored
+`data/raw/mlb_stats_api/<season>/` tree. Cache writes are atomic, season ingestion is
+resumable, and each normalized game is committed independently.
+
+The cached 2025 layer is frozen by a deterministic per-file SHA-256 manifest in the ignored
+interim data directory. `docs/SEASON_2025_AUDIT.md` records its aggregate counts and
+manifest checksum. Outcome tables remain historical facts and are inputs to future
+as-of feature builders only through a cutoff strictly before the target game.
 
 ## Modeling architecture
 

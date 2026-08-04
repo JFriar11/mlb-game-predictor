@@ -7,13 +7,17 @@ from sqlalchemy import select
 from mlb_predictor.config import get_settings
 from mlb_predictor.db.models import Game
 from mlb_predictor.db.session import create_db_engine, session_scope
+from mlb_predictor.ingestion.cache import RawJsonCache
 from mlb_predictor.ingestion.client import MlbStatsClient
+from mlb_predictor.ingestion.season import ingest_season
 from mlb_predictor.ingestion.service import ingest_game
 from mlb_predictor.logging import configure_logging
 from mlb_predictor.reporting import reconstruct_game
 from mlb_predictor.validation.games import validate_games
+from mlb_predictor.validation.season import audit_season
 
 MANIFEST_PATH = Path(__file__).parents[2] / "config" / "sprint0_games.json"
+PROJECT_ROOT = Path(__file__).parents[2]
 
 
 def _load_sprint0_ids() -> list[int]:
@@ -59,18 +63,79 @@ def _show_game(game_pk: int | None) -> int:
     return 0
 
 
+def _ingest_season(season: int) -> int:
+    settings = get_settings()
+    engine = create_db_engine()
+    cache = RawJsonCache(PROJECT_ROOT / "data" / "raw" / "mlb_stats_api")
+    exception_path = PROJECT_ROOT / "data" / "interim" / f"{season}_ingestion_exceptions.json"
+    with MlbStatsClient(
+        settings.api_base_url, settings.http_timeout_seconds, settings.http_max_attempts
+    ) as client:
+        result = ingest_season(engine, client, cache, season, exception_path)
+    print(
+        f"Season {season}: discovered={result.discovered}, ingested={result.ingested}, "
+        f"exceptions={len(result.exceptions)}"
+    )
+    print(f"Exception report: {exception_path}")
+    return 0 if not result.exceptions else 1
+
+
+def _audit_season(season: int, output: Path | None) -> int:
+    with session_scope(create_db_engine()) as session:
+        audit = audit_season(session, season)
+        payload = audit.to_dict()
+    rendered = json.dumps(payload, indent=2, default=str)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered + "\n", encoding="utf-8")
+        print(f"Audit report: {output}")
+    print(rendered)
+    return 0 if audit.passed else 1
+
+
+def _freeze_raw(season: int, output: Path) -> int:
+    cache = RawJsonCache(PROJECT_ROOT / "data" / "raw" / "mlb_stats_api")
+    manifest = cache.build_manifest(season)
+    expected_files = 2431  # one schedule plus 2,430 completed regular-season game feeds
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    print(
+        f"Raw manifest: files={manifest['file_count']}, bytes={manifest['total_bytes']}, "
+        f"output={output}"
+    )
+    return 0 if manifest["file_count"] == expected_files else 1
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="MLB predictor Sprint 0 tooling")
+    parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("ingest-five", help="ingest only the five-game Sprint 0 manifest")
     validate = subparsers.add_parser("validate", help="run Sprint 0 data-quality checks")
     validate.add_argument("--expected-games", type=int, default=5)
     show = subparsers.add_parser("show-game", help="print a reconstructed game")
     show.add_argument("game_pk", type=int, nargs="?")
+    season_ingest = subparsers.add_parser(
+        "ingest-season", help="ingest the cached 2025 regular season"
+    )
+    season_ingest.add_argument("--season", type=int, default=2025, choices=[2025])
+    season_audit = subparsers.add_parser("audit-season", help="audit the normalized season")
+    season_audit.add_argument("--season", type=int, default=2025, choices=[2025])
+    season_audit.add_argument("--output", type=Path)
+    raw_freeze = subparsers.add_parser("freeze-raw", help="checksum the cached 2025 raw layer")
+    raw_freeze.add_argument("--season", type=int, default=2025, choices=[2025])
+    raw_freeze.add_argument(
+        "--output", type=Path, default=Path("data/interim/2025_raw_manifest.json")
+    )
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
         return _ingest_five()
     if args.command == "validate":
         return _validate(args.expected_games)
+    if args.command == "ingest-season":
+        return _ingest_season(args.season)
+    if args.command == "audit-season":
+        return _audit_season(args.season, args.output)
+    if args.command == "freeze-raw":
+        return _freeze_raw(args.season, args.output)
     return _show_game(args.game_pk)

@@ -2,15 +2,15 @@
 
 ## Sprint 0 — Repository and five-game ingestion
 
-**Completed 2026-08-03; awaiting review.** Delivered the typed local foundation and
+**Completed and approved 2026-08-03.** Delivered the typed local foundation and
 reconstructed five historical games, including ordinary, extra-inning, doubleheader,
 retractable-roof, and Cubs cases. Acceptance passed after an idempotent rerun.
 
 ## Sprint 1 — 2025 historical data foundation
 
-**Do not begin until the user approves Sprint 0.**
-
-Ingest 2025 regular-season games, starters, lineups, player-game batting, player-game pitching, and relevant reference data.
+**Completed 2026-08-03; awaiting review before Sprint 2.** Ingested all 2,430 games with
+starters, lineups, player-game batting, player-game pitching, raw caching, an idempotent
+rerun, and a passing season audit. See `docs/SEASON_2025_AUDIT.md`.
 
 ## Sprint 2 — Leakage-safe feature engine
 

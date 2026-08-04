@@ -105,3 +105,12 @@ Persist or record:
 - Evaluation period
 - Random seed
 - Dependency lockfile
+
+## Player-game outcomes
+
+`player_game_batting` and `player_game_pitching` are postgame outcome records. They may be
+used to calculate rolling history only when the source game's effective time is before the
+target game's as-of cutoff. They must never be joined directly as same-game pregame features.
+
+The 2025 raw source layer is cached and checksum-manifested. A changed checksum requires a
+new audit and an explicit explanation before rebuilding features.

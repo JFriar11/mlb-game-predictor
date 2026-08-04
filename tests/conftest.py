@@ -33,16 +33,51 @@ def game_feed() -> dict[str, Any]:
     }
 
     def box(ids: list[int], starter: int) -> dict[str, Any]:
+        players = {
+            f"ID{player_id}": {
+                "person": people[f"ID{player_id}"],
+                "position": {"abbreviation": "CF"},
+                "stats": {
+                    "batting": {
+                        "gamesPlayed": 1,
+                        "plateAppearances": 4,
+                        "atBats": 4,
+                        "runs": 0,
+                        "hits": 1,
+                        "doubles": 0,
+                        "triples": 0,
+                        "homeRuns": 0,
+                        "rbi": 0,
+                        "baseOnBalls": 0,
+                        "strikeOuts": 1,
+                        "stolenBases": 0,
+                    }
+                },
+            }
+            for player_id in ids
+        }
+        players[f"ID{starter}"] = {
+            "person": people[f"ID{starter}"],
+            "position": {"abbreviation": "P"},
+            "stats": {
+                "pitching": {
+                    "inningsPitched": "5.2",
+                    "battersFaced": 22,
+                    "numberOfPitches": 91,
+                    "strikes": 61,
+                    "hits": 5,
+                    "runs": 2,
+                    "earnedRuns": 2,
+                    "baseOnBalls": 1,
+                    "strikeOuts": 7,
+                    "homeRuns": 1,
+                }
+            },
+        }
         return {
             "battingOrder": ids,
             "pitchers": [starter],
-            "players": {
-                f"ID{player_id}": {
-                    "person": people[f"ID{player_id}"],
-                    "position": {"abbreviation": "CF"},
-                }
-                for player_id in [*ids, starter]
-            },
+            "players": players,
         }
 
     return {

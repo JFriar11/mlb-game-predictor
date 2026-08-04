@@ -74,6 +74,26 @@ five-game manifest twice, validates it, and prints one reconstruction.
 The Make workflow explicitly exports the Compose database URL; ignored developer `.env`
 files cannot redirect the acceptance run to another local database.
 
+## D011 — Player-game outcome storage
+
+**Date:** 2026-08-03
+
+**Decision:** Store normalized player-game batting and pitching counting statistics in
+PostgreSQL, including pitching innings as integer outs rather than baseball-decimal text.
+
+**Reason:** Integer outs are unambiguous and aggregatable. Normalized outcomes support
+future as-of rolling features while database constraints and stable IDs preserve quality.
+
+## D012 — Raw cache and season freeze
+
+**Date:** 2026-08-03
+
+**Decision:** Cache the 2025 schedule and completed-game feeds as ignored gzip JSON files,
+write them atomically, and freeze the layer with a deterministic SHA-256 manifest.
+
+**Reason:** A local raw layer makes ingestion resumable and repeatable without repeated API
+requests. The manifest detects source changes while keeping large source data out of Git.
+
 **Reason:** One repository-owned workflow avoids machine-specific Homebrew service state
 and makes the acceptance sequence reviewable. The local Compose credentials are explicitly
 development-only defaults; real credentials stay in ignored environment configuration.
