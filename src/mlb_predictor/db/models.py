@@ -5,7 +5,9 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,
@@ -167,3 +169,51 @@ class PlayerGamePitching(Base):
     home_runs_allowed: Mapped[int] = mapped_column(Integer)
     source: Mapped[str] = mapped_column(String(50))
     retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class PregameFeatureSnapshot(Base):
+    __tablename__ = "pregame_feature_snapshots"
+    __table_args__ = (
+        UniqueConstraint(
+            "game_pk", "offense_team_id", "feature_version", name="uq_features_game_team_version"
+        ),
+        CheckConstraint("offense_team_id <> opponent_team_id", name="ck_features_distinct_teams"),
+        CheckConstraint(
+            "team_prior_games >= 0 AND lineup_prior_pa >= 0 AND starter_prior_starts >= 0 "
+            "AND bullpen_prior_outs >= 0 AND bullpen_recent_outs >= 0 "
+            "AND fallback_count >= 0",
+            name="ck_features_nonnegative_samples",
+        ),
+        Index("ix_features_version_as_of", "feature_version", "as_of"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    game_pk: Mapped[int] = mapped_column(ForeignKey("games.game_pk", ondelete="CASCADE"))
+    offense_team_id: Mapped[int] = mapped_column(ForeignKey("teams.team_id"))
+    opponent_team_id: Mapped[int] = mapped_column(ForeignKey("teams.team_id"))
+    starter_id: Mapped[int] = mapped_column(ForeignKey("players.player_id"))
+    venue_id: Mapped[int] = mapped_column(ForeignKey("venues.venue_id"))
+    is_home: Mapped[bool] = mapped_column(Boolean)
+    as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    feature_version: Mapped[str] = mapped_column(String(40))
+    max_source_game_date: Mapped[date | None] = mapped_column(Date)
+    team_prior_games: Mapped[int] = mapped_column(Integer)
+    team_runs_avg_10: Mapped[float] = mapped_column(Float)
+    team_runs_allowed_avg_10: Mapped[float] = mapped_column(Float)
+    team_runs_avg_season: Mapped[float] = mapped_column(Float)
+    lineup_prior_pa: Mapped[int] = mapped_column(Integer)
+    lineup_on_base_rate: Mapped[float] = mapped_column(Float)
+    lineup_strikeout_rate: Mapped[float] = mapped_column(Float)
+    lineup_home_run_rate: Mapped[float] = mapped_column(Float)
+    starter_prior_starts: Mapped[int] = mapped_column(Integer)
+    starter_era: Mapped[float] = mapped_column(Float)
+    starter_strikeout_rate: Mapped[float] = mapped_column(Float)
+    starter_walk_rate: Mapped[float] = mapped_column(Float)
+    starter_outs_per_start: Mapped[float] = mapped_column(Float)
+    bullpen_prior_outs: Mapped[int] = mapped_column(Integer)
+    bullpen_era_30d: Mapped[float] = mapped_column(Float)
+    bullpen_strikeout_rate_30d: Mapped[float] = mapped_column(Float)
+    bullpen_walk_rate_30d: Mapped[float] = mapped_column(Float)
+    bullpen_recent_outs: Mapped[int] = mapped_column(Integer)
+    days_rest: Mapped[int] = mapped_column(Integer)
+    fallback_count: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

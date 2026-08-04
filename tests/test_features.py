@@ -1,0 +1,62 @@
+from copy import deepcopy
+from datetime import date
+from typing import Any
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from mlb_predictor.db.models import PregameFeatureSnapshot
+from mlb_predictor.features.builder import build_2025_features
+from mlb_predictor.ingestion.service import ingest_game
+
+
+class StubClient:
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self.payload = payload
+
+    def get_game_feed(self, game_pk: int) -> dict[str, Any]:
+        return self.payload
+
+
+def test_features_use_only_strictly_prior_dates(
+    session: Session, game_feed: dict[str, Any]
+) -> None:
+    ingest_game(session, StubClient(game_feed), 999001)
+    next_feed = deepcopy(game_feed)
+    next_feed["gameData"]["game"]["pk"] = 999002
+    next_feed["gameData"]["datetime"] = {
+        "dateTime": "2025-04-02T18:20:00Z",
+        "officialDate": "2025-04-02",
+        "firstPitch": "2025-04-02T18:22:00Z",
+    }
+    ingest_game(session, StubClient(next_feed), 999002)
+    doubleheader_feed = deepcopy(next_feed)
+    doubleheader_feed["gameData"]["game"]["pk"] = 999003
+    doubleheader_feed["gameData"]["game"]["doubleHeader"] = "Y"
+    doubleheader_feed["gameData"]["game"]["gameNumber"] = 2
+    doubleheader_feed["gameData"]["datetime"]["dateTime"] = "2025-04-02T23:20:00Z"
+    doubleheader_feed["gameData"]["datetime"]["firstPitch"] = "2025-04-02T23:22:00Z"
+    ingest_game(session, StubClient(doubleheader_feed), 999003)
+
+    snapshots = build_2025_features(session, "test_v1")
+    session.commit()
+
+    assert len(snapshots) == 6
+    first = [item for item in snapshots if item.game_pk == 999001]
+    second = [item for item in snapshots if item.game_pk == 999002]
+    same_day_second_game = [item for item in snapshots if item.game_pk == 999003]
+    assert all(item.team_prior_games == 0 for item in first)
+    assert all(item.max_source_game_date is None for item in first)
+    assert all(item.team_prior_games == 1 for item in second)
+    assert all(item.team_prior_games == 1 for item in same_day_second_game)
+    assert all(item.max_source_game_date == date(2025, 4, 1) for item in second)
+    assert all(item.max_source_game_date < date(2025, 4, 2) for item in second)
+    assert (
+        session.scalar(
+            select(PregameFeatureSnapshot).where(
+                PregameFeatureSnapshot.game_pk == 999002,
+                PregameFeatureSnapshot.is_home.is_(True),
+            )
+        )
+        is not None
+    )

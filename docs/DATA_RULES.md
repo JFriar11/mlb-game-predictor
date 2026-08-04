@@ -51,6 +51,10 @@ All rolling metrics must:
 
 For Game 2 of a doubleheader, explicitly decide whether Game 1 data would have been available and processed by the production system. Document the choice.
 
+Sprint 2 policy: exclude all same-calendar-date outcomes. Game 2 does not use Game 1. This
+is conservative and remains in force until historical timing data proves Game 1 completion
+and pipeline availability before Game 2's as-of timestamp.
+
 ## Cold starts
 
 Fallback hierarchy may use:
@@ -63,6 +67,9 @@ Fallback hierarchy may use:
 6. League average
 
 The specific implementation should be tested and documented.
+
+Sprint 2 uses expanding prior-season league rates and fixed initial priors when 2025 has no
+earlier observations. Every snapshot retains sample sizes and a fallback count.
 
 ## Weather
 

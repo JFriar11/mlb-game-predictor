@@ -7,12 +7,14 @@ from sqlalchemy import select
 from mlb_predictor.config import get_settings
 from mlb_predictor.db.models import Game
 from mlb_predictor.db.session import create_db_engine, session_scope
+from mlb_predictor.features.builder import build_2025_features
 from mlb_predictor.ingestion.cache import RawJsonCache
 from mlb_predictor.ingestion.client import MlbStatsClient
 from mlb_predictor.ingestion.season import ingest_season
 from mlb_predictor.ingestion.service import ingest_game
 from mlb_predictor.logging import configure_logging
 from mlb_predictor.reporting import reconstruct_game
+from mlb_predictor.validation.features import audit_features
 from mlb_predictor.validation.games import validate_games
 from mlb_predictor.validation.season import audit_season
 
@@ -106,6 +108,28 @@ def _freeze_raw(season: int, output: Path) -> int:
     return 0 if manifest["file_count"] == expected_files else 1
 
 
+def _build_features(season: int, feature_version: str) -> int:
+    if season != 2025:
+        raise ValueError("Sprint 2 feature construction is restricted to season 2025")
+    with session_scope(create_db_engine()) as session:
+        snapshots = build_2025_features(session, feature_version)
+    print(f"Built {len(snapshots)} feature rows for {season}, version={feature_version}")
+    return 0
+
+
+def _audit_features(feature_version: str, output: Path | None) -> int:
+    with session_scope(create_db_engine()) as session:
+        audit = audit_features(session, feature_version)
+        payload = audit.to_dict()
+    rendered = json.dumps(payload, indent=2, default=str)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered + "\n", encoding="utf-8")
+        print(f"Feature audit: {output}")
+    print(rendered)
+    return 0 if audit.passed else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -126,6 +150,16 @@ def main() -> int:
     raw_freeze.add_argument(
         "--output", type=Path, default=Path("data/interim/2025_raw_manifest.json")
     )
+    feature_build = subparsers.add_parser(
+        "build-features", help="build leakage-controlled 2025 pregame snapshots"
+    )
+    feature_build.add_argument("--season", type=int, default=2025, choices=[2025])
+    feature_build.add_argument("--version", default="sprint2_v1")
+    feature_audit = subparsers.add_parser(
+        "audit-features", help="audit feature coverage and as-of cutoffs"
+    )
+    feature_audit.add_argument("--version", default="sprint2_v1")
+    feature_audit.add_argument("--output", type=Path)
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
@@ -138,4 +172,8 @@ def main() -> int:
         return _audit_season(args.season, args.output)
     if args.command == "freeze-raw":
         return _freeze_raw(args.season, args.output)
+    if args.command == "build-features":
+        return _build_features(args.season, args.version)
+    if args.command == "audit-features":
+        return _audit_features(args.version, args.output)
     return _show_game(args.game_pk)

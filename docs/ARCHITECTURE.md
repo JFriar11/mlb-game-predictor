@@ -182,6 +182,17 @@ interim data directory. `docs/SEASON_2025_AUDIT.md` records its aggregate counts
 manifest checksum. Outcome tables remain historical facts and are inputs to future
 as-of feature builders only through a cutoff strictly before the target game.
 
+## Sprint 2 feature layer
+
+`pregame_feature_snapshots` stores two versioned rows per game. The chronological builder
+loads the frozen normalized season, groups targets by date, emits every snapshot for the
+date, and only then updates its rolling state. This state-transition boundary prevents
+same-day and doubleheader leakage by construction.
+
+The table retains `as_of`, `max_source_game_date`, feature version, sample sizes, and a
+fallback count. The audit checks row cardinality, cutoff ordering, source ordering, numeric
+finiteness, and deterministic rebuilds. See `docs/FEATURE_2025_AUDIT.md`.
+
 ## Modeling architecture
 
 Begin with a stacked team-game training table:

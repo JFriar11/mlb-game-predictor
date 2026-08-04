@@ -61,6 +61,19 @@ export MLB_DATABASE_URL=postgresql+psycopg://mlb:mlb@localhost:55432/mlb_predict
 The ingestion is restricted to 2025, caches responses under ignored `data/raw/`, and is
 safe to rerun. The accepted counts and limitations are in `docs/SEASON_2025_AUDIT.md`.
 
+## Leakage-safe 2025 features
+
+```bash
+export MLB_DATABASE_URL=postgresql+psycopg://mlb:mlb@localhost:55432/mlb_predictor
+.venv-sprint0/bin/alembic upgrade head
+.venv-sprint0/bin/mlb-predictor build-features --season 2025 --version sprint2_v1
+.venv-sprint0/bin/mlb-predictor audit-features --version sprint2_v1 \
+  --output data/interim/2025_feature_audit.json
+```
+
+The builder emits two rows per game and excludes all same-day outcomes. Definitions,
+fallbacks, observed ranges, and limitations are in `docs/FEATURE_2025_AUDIT.md`.
+
 ## Quality checks
 
 ```bash

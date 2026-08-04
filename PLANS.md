@@ -136,3 +136,26 @@ After Sprint 0 approval:
 ### Stop condition
 
 Do not begin Sprint 2 feature engineering until the user reviews the 2025 season audit.
+
+## Completed plan: Sprint 2 — Leakage-safe feature engine
+
+**Status:** Completed 2026-08-03. Awaiting review before Sprint 3 model training.
+
+### Completion record
+
+- Added Alembic revision `0003` and versioned `pregame_feature_snapshots`.
+- Built 4,860 stacked team-game rows covering all 2,430 games.
+- Added prior team offense, lineup, opposing starter, opposing bullpen, venue/home, rest,
+  sample-size, fallback, as-of, and source-date fields.
+- Conservatively excluded every same-day outcome, including Game 1 from doubleheader Game 2.
+- Added fixed and expanding-league cold-start fallbacks with explicit fallback counts.
+- Verified zero as-of violations, zero source-date violations, and zero non-finite rows.
+- Rebuilt the complete table with the same value checksum (`ad1b24be20ea4779c7fb249e0c948388`).
+- Final verification: Ruff passed, formatting passed, 11 tests passed, and Alembic reported
+  no schema drift.
+- Published feature definitions, ranges, limitations, and audit results in
+  `docs/FEATURE_2025_AUDIT.md`.
+
+### Stop condition
+
+Do not begin Sprint 3 baseline model training until the user reviews the feature audit.

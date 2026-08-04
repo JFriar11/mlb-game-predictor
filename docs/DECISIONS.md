@@ -94,6 +94,27 @@ write them atomically, and freeze the layer with a deterministic SHA-256 manifes
 **Reason:** A local raw layer makes ingestion resumable and repeatable without repeated API
 requests. The manifest detects source changes while keeping large source data out of Git.
 
+## D013 — Same-day outcomes are excluded
+
+**Date:** 2026-08-03
+
+**Decision:** Build every target-date snapshot before updating state with any game from that
+date. Game 2 of a doubleheader cannot use Game 1 in `sprint2_v1`.
+
+**Reason:** The historical layer does not establish when Game 1 became final and processed
+relative to Game 2's T-minus-30 cutoff. Exclusion is the defensible leakage-safe default.
+
+## D014 — Versioned feature snapshots and fallbacks
+
+**Date:** 2026-08-03
+
+**Decision:** Persist two versioned rows per game with explicit as-of/source dates, sample
+sizes, and fallback counts. Use expanding prior league values and documented fixed priors
+for 2025 cold starts.
+
+**Reason:** Persisted metadata makes leakage and cold-start behavior auditable. Feature
+versions prevent silent changes from invalidating later chronological comparisons.
+
 **Reason:** One repository-owned workflow avoids machine-specific Homebrew service state
 and makes the acceptance sequence reviewable. The local Compose credentials are explicitly
 development-only defaults; real credentials stay in ignored environment configuration.

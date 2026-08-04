@@ -14,6 +14,10 @@ rerun, and a passing season audit. See `docs/SEASON_2025_AUDIT.md`.
 
 ## Sprint 2 — Leakage-safe feature engine
 
+**Completed 2026-08-03; awaiting review before Sprint 3.** Built and audited 4,860
+versioned pregame feature rows with strict prior-date cutoffs and explicit fallbacks. See
+`docs/FEATURE_2025_AUDIT.md`.
+
 Create as-of rolling features using only information available before each game.
 
 Initial features:
