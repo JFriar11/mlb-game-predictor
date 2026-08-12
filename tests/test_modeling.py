@@ -7,6 +7,8 @@ import pytest
 from mlb_predictor.modeling.dataset import FEATURE_COLUMNS, model_features
 from mlb_predictor.modeling.models import MODEL_SPECS
 from mlb_predictor.modeling.multiseason import rolling_origin_split
+from mlb_predictor.modeling.pitching_ablation import ABLATION_GROUPS
+from mlb_predictor.modeling.pitching_evaluation import FEATURE_COLUMNS as PITCHING_COLUMNS
 from mlb_predictor.modeling.splits import DEVELOPMENT_FOLDS, split_frame
 from mlb_predictor.modeling.stabilization import stabilize_small_samples
 
@@ -71,3 +73,22 @@ def test_multiseason_rolling_origin_excludes_future_seasons() -> None:
     assert set(train["season"]) == {2021, 2022}
     assert set(evaluation["season"]) == {2023}
     assert 2024 not in set(train["season"])
+
+
+def test_pitching_model_features_exclude_component_targets_and_future_identifiers() -> None:
+    assert "starter_outs" not in PITCHING_COLUMNS
+    assert "starter_pitches" not in PITCHING_COLUMNS
+    assert "bullpen_outs" not in PITCHING_COLUMNS
+    assert "game_pk" not in PITCHING_COLUMNS
+    assert "season" not in PITCHING_COLUMNS
+
+
+def test_sprint5_5_ablation_matrix_is_fixed_and_target_free() -> None:
+    assert len(ABLATION_GROUPS) == 12  # baseline plus eleven requested additions
+    assert ABLATION_GROUPS["expected_starter_outs"] == ("expected_starter_outs",)
+    assert ABLATION_GROUPS["expected_bullpen_outs"] == ("expected_bullpen_outs",)
+    flattened = {item for group in ABLATION_GROUPS.values() for item in group}
+    assert "runs_scored" not in flattened
+    assert "starter_outs" not in flattened
+    assert "starter_pitches" not in flattened
+    assert "bullpen_outs" not in flattened

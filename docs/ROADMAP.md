@@ -55,7 +55,7 @@ development backtests. See `docs/MULTISEASON_2021_2025_AUDIT.md`.
 
 ## Sprint 4 — Confirmed-lineup matchup engine
 
-**Completed 2026-08-04; awaiting review before Sprint 5.** Added a separately versioned,
+**Completed and approved 2026-08-12.** Added a separately versioned,
 leakage-safe confirmed-lineup matchup layer from cached feeds. The full feature bundle
 did not improve the combined rolling-origin backtest and was not promoted. See
 `docs/SPRINT4_MATCHUP_AUDIT.md`.
@@ -69,6 +69,18 @@ Add:
 - Sample-size fallback hierarchy
 
 ## Sprint 5 — Starter and bullpen models
+
+**Completed and approved 2026-08-12 as a component milestone.** Built leakage-safe starter
+length, pitch-count, hook, bullpen workload, availability, role-proxy, and quality-mixture
+state. Simple pitcher rolling forecasts beat gradient boosting, and the full downstream
+state bundle was not promoted. See `docs/SPRINT5_PITCHING_AUDIT.md`.
+
+## Sprint 5.5 — Downstream pitching-state ablation
+
+**Completed 2026-08-12; awaiting review before Sprint 6.** Compared eleven predeclared
+pitching subsets against immutable `sprint3_5_v1`. No subset improved robustly enough for
+promotion; no new feature/model version was created. See
+`docs/SPRINT5_5_DOWNSTREAM_ABLATION.md`.
 
 Add:
 

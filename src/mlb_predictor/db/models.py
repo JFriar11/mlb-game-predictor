@@ -298,3 +298,44 @@ class PlayerGamePitchGroup(Base):
     hits_on_contact: Mapped[int] = mapped_column(Integer)
     source: Mapped[str] = mapped_column(String(50))
     retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class PitchingFeatureSnapshot(Base):
+    __tablename__ = "pitching_feature_snapshots"
+    __table_args__ = (
+        UniqueConstraint("game_pk", "team_id", "feature_version", name="uq_pitching_features"),
+        CheckConstraint(
+            "starter_prior_starts >= 0 AND starter_days_rest >= 0 "
+            "AND team_prior_games >= 0 AND bullpen_prior_appearances >= 0 "
+            "AND bullpen_workload_1d >= 0 AND bullpen_workload_3d >= 0 "
+            "AND available_reliever_count >= 0 AND unavailable_reliever_count >= 0",
+            name="ck_pitching_features_nonnegative",
+        ),
+        Index("ix_pitching_features_version_as_of", "feature_version", "as_of"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    game_pk: Mapped[int] = mapped_column(ForeignKey("games.game_pk", ondelete="CASCADE"))
+    team_id: Mapped[int] = mapped_column(ForeignKey("teams.team_id"))
+    starter_id: Mapped[int] = mapped_column(ForeignKey("players.player_id"))
+    feature_version: Mapped[str] = mapped_column(String(40))
+    as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    max_source_game_date: Mapped[date | None] = mapped_column(Date)
+    starter_prior_starts: Mapped[int] = mapped_column(Integer)
+    starter_avg_outs: Mapped[float] = mapped_column(Float)
+    starter_avg_pitches: Mapped[float] = mapped_column(Float)
+    starter_pitches_per_out: Mapped[float] = mapped_column(Float)
+    starter_days_rest: Mapped[int] = mapped_column(Integer)
+    team_prior_games: Mapped[int] = mapped_column(Integer)
+    manager_avg_starter_outs: Mapped[float] = mapped_column(Float)
+    manager_avg_starter_pitches: Mapped[float] = mapped_column(Float)
+    bullpen_prior_appearances: Mapped[int] = mapped_column(Integer)
+    bullpen_workload_1d: Mapped[int] = mapped_column(Integer)
+    bullpen_workload_3d: Mapped[int] = mapped_column(Integer)
+    available_reliever_count: Mapped[int] = mapped_column(Integer)
+    unavailable_reliever_count: Mapped[int] = mapped_column(Integer)
+    available_bullpen_era: Mapped[float] = mapped_column(Float)
+    available_bullpen_strikeout_rate: Mapped[float] = mapped_column(Float)
+    available_bullpen_walk_rate: Mapped[float] = mapped_column(Float)
+    high_usage_available: Mapped[int] = mapped_column(Integer)
+    fallback_count: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

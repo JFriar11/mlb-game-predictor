@@ -118,6 +118,33 @@ frozen raw layer. It creates compact handedness and pitch-group aggregates, rebu
 The full feature bundle did not improve combined backtest Poisson deviance, so it is not
 promoted over `sprint3_5_v1`. See `docs/SPRINT4_MATCHUP_AUDIT.md`.
 
+## Sprint 5 starter and bullpen models
+
+From the accepted normalized 2021–2025 database, reproduce the versioned pitching state,
+component forecasts, validation, and downstream run-model ablation with:
+
+```bash
+make sprint5-audit
+```
+
+This does not download or modify raw data. Pitcher rolling history beat gradient boosting
+for starter outs and pitch count; adding the complete bullpen/state bundle slightly
+worsened combined run-model Poisson deviance, so it is not promoted wholesale. See
+`docs/SPRINT5_PITCHING_AUDIT.md`.
+
+## Sprint 5.5 downstream pitching ablation
+
+Run the fixed eleven-subset downstream comparison from accepted `sprint3_5_v1` and
+`sprint5_v1` with:
+
+```bash
+make sprint5-5-audit
+```
+
+No subset met the robust promotion standard. Available-reliever quality had the best
+combined Poisson-deviance change but worsened three of four season origins, so no new
+feature/model version was created. See `docs/SPRINT5_5_DOWNSTREAM_ABLATION.md`.
+
 ## Quality checks
 
 ```bash

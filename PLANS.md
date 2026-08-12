@@ -207,7 +207,7 @@ Stop for review. Do not begin Sprint 4 or any advanced feature/model/application
 
 ## Completed plan: Sprint 4 — Confirmed-lineup matchup engine
 
-**Status:** Completed 2026-08-04. Awaiting review before Sprint 5.
+**Status:** Completed 2026-08-04 and approved 2026-08-12.
 
 - Preserved `sprint3_5_v1` and the frozen raw caches; created `sprint4_v1` separately.
 - Replayed cached feeds into compact, idempotent batter-handedness and player pitch-group
@@ -225,3 +225,44 @@ Stop for review. Do not begin Sprint 4 or any advanced feature/model/application
 ### Stop condition
 
 Stop for review. Do not begin Sprint 5 starter/bullpen modeling or later roadmap work.
+
+## Completed plan: Sprint 5 — Starter and bullpen models
+
+**Status:** Completed and approved 2026-08-12 as a component-model milestone.
+
+- Added a separate `sprint5_v1` pitching-state table without modifying accepted feature
+  versions or frozen raw caches.
+- Built 24,296 defense-team snapshots with starter length/pitch history, team hook proxies,
+  recent bullpen workload, availability proxies, prior-usage role inference, and an
+  available-reliever quality mixture.
+- Enforced strict prior-date updates and preserved same-day doubleheader isolation.
+- Compared league means, pitcher rolling forecasts, and gradient boosting at rolling
+  2022–2025 origins. Pitcher rolling history won for both starter outs and pitch count.
+- Derived expected bullpen outs from scheduled game length and the selected starter-outs
+  forecast; evaluated residual-based 80% and 95% starter-outs intervals.
+- Adding the full pitching-state bundle to the accepted gradient-boosting run model worsened
+  combined Poisson deviance by 0.00525, so the bundle was not promoted wholesale.
+- Explicitly excluded nine missing component targets where the listed starter faced no
+  batter and recorded no out; their pregame feature rows remain present and valid.
+
+### Stop condition
+
+Stop for review. Do not begin Sprint 6 run-environment work or later roadmap work.
+
+## Completed plan: Sprint 5.5 — Downstream pitching-state ablation
+
+**Status:** Completed 2026-08-12. Awaiting review before Sprint 6.
+
+- Predeclared eleven individual and compact pitching-state additions plus the immutable
+  `sprint3_5_v1` baseline before evaluation.
+- Reused the exact accepted histogram gradient-boosting configuration and 2022–2025
+  rolling-origin protocol; component models were not redesigned or tuned.
+- Reported Poisson deviance, MAE, RMSE, bias, count NLL, seasons, and four requested slices.
+- Available-reliever quality had the largest combined improvement (`-0.00337` Poisson
+  deviance), but worsened 2023–2025 and therefore did not meet the clear-promotion bar.
+- No new feature/model version was created. All Sprint 5 additions remain component-only;
+  available-reliever quality is retained as the leading prospective-confirmation candidate.
+
+### Stop condition
+
+Stop for review. Do not begin Sprint 6 or any weather, park, simulation, API, or dashboard work.

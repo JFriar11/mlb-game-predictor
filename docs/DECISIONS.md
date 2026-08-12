@@ -217,3 +217,48 @@ new, predeclared component ablation.
 **Reason:** Relative to `sprint3_5_v1`, combined Poisson deviance worsened by 0.0409 for
 stabilized Poisson and 0.00465 for gradient boosting. Small seasonal improvements were
 not consistent enough to justify added complexity.
+
+## D024 — Prior-usage bullpen roles and availability
+
+**Date:** 2026-08-12
+
+**Decision:** Define high-usage relievers from the three largest strictly prior appearance
+counts. Treat a reliever as workload-unavailable after at least 30 pitches yesterday or 50
+pitches over the prior three days. Build the quality mixture from remaining relievers.
+
+**Reason:** Saves, holds, leverage index, roster transactions, and manager declarations are
+not normalized. A transparent pregame workload proxy avoids leaking end-of-season roles.
+
+## D025 — Rolling starter forecast remains selected
+
+**Date:** 2026-08-12
+
+**Decision:** Select decayed pitcher rolling history for starter outs and pitch count rather
+than Sprint 5 gradient boosting. Derive expected bullpen outs from scheduled innings minus
+the rolling starter-outs estimate.
+
+**Reason:** Across rolling 2022–2025 origins, rolling history had lower MAE and RMSE for
+both targets. Complexity did not earn promotion.
+
+## D026 — Do not promote the complete pitching-state bundle
+
+**Date:** 2026-08-12
+
+**Decision:** Preserve `sprint5_v1` for component use and future declared ablations, but
+retain `sprint3_5_v1` as the run-model reference.
+
+**Reason:** Adding all Sprint 5 state fields increased combined run Poisson deviance from
+2.27647 to 2.28171. Improvements in 2022 and 2024 were not consistent across seasons.
+
+## D027 — No Sprint 5.5 downstream promotion
+
+**Date:** 2026-08-12
+
+**Decision:** Create no new run feature/model version from Sprint 5.5. Keep all Sprint 5
+features component-only. Preserve available-reliever quality as a prospective-confirmation
+candidate, not as a promoted run-model input.
+
+**Reason:** Its combined Poisson deviance improved from 2.27647 to 2.27310, but the gain
+was concentrated in 2022 and the subset worsened 2023, 2024, and 2025. Other improvements
+were smaller, while every predeclared compact group worsened the primary metric. Selecting
+on the combined result alone would overstate evidence after repeated historical review.

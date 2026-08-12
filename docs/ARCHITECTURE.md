@@ -228,6 +228,19 @@ features. All target-date snapshots are emitted before that date updates state, 
 the same doubleheader boundary as earlier feature versions. Samples, fallbacks, as-of
 dates, and source dates remain stored with each row. The source cache is read-only.
 
+## Sprint 5 pitching component layer
+
+`pitching_feature_snapshots` stores one versioned pregame row per defensive team-game.
+The date-batched builder derives starter length and pitch history, team-level hook proxies,
+reliever workload, prior-usage role proxies, availability flags, and an available-bullpen
+quality mixture from strictly earlier dates. Component evaluation joins postgame targets
+only after feature construction. Expected bullpen length is scheduled team outs minus the
+selected starter-outs forecast; it is not an in-game outcome feature.
+
+Sprint 5.5 joins this accepted state to `sprint3_5_v1` only in the modeling dataset. It
+runs a fixed subset matrix without persisting a new feature version. Because no subset met
+the promotion standard, the production/reference feature graph remains unchanged.
+
 ## Specialized-model dependency order
 
 1. Build pregame bullpen usage state.

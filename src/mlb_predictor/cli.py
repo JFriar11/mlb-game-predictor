@@ -9,6 +9,7 @@ from mlb_predictor.db.models import Game
 from mlb_predictor.db.session import create_db_engine, session_scope
 from mlb_predictor.features.builder import build_2025_features, build_multiseason_features
 from mlb_predictor.features.matchup_builder import build_matchup_features
+from mlb_predictor.features.pitching_builder import build_pitching_features
 from mlb_predictor.ingestion.cache import RawJsonCache
 from mlb_predictor.ingestion.client import MlbStatsClient
 from mlb_predictor.ingestion.matchups import rebuild_matchup_aggregates
@@ -18,10 +19,13 @@ from mlb_predictor.logging import configure_logging
 from mlb_predictor.modeling.evaluation import run_sprint3_evaluation
 from mlb_predictor.modeling.matchup_evaluation import run_sprint4_evaluation
 from mlb_predictor.modeling.multiseason import run_multiseason_evaluation
+from mlb_predictor.modeling.pitching_ablation import run_pitching_ablation
+from mlb_predictor.modeling.pitching_evaluation import run_pitching_evaluation
 from mlb_predictor.reporting import reconstruct_game
 from mlb_predictor.validation.features import audit_features
 from mlb_predictor.validation.games import validate_games
 from mlb_predictor.validation.matchups import audit_matchups
+from mlb_predictor.validation.pitching import audit_pitching_features
 from mlb_predictor.validation.season import audit_season
 
 MANIFEST_PATH = Path(__file__).parents[2] / "config" / "sprint0_games.json"
@@ -224,6 +228,45 @@ def _audit_matchups(output: Path | None) -> int:
     return 0 if payload["passed"] else 1
 
 
+def _build_pitching_features() -> int:
+    with session_scope(create_db_engine()) as session:
+        snapshots = build_pitching_features(session)
+    print(f"Built {len(snapshots)} Sprint 5 pitching rows, version=sprint5_v1")
+    return 0
+
+
+def _audit_pitching_features(output: Path | None) -> int:
+    with session_scope(create_db_engine()) as session:
+        payload = audit_pitching_features(session).to_dict()
+    rendered = json.dumps(payload, indent=2)
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered + "\n", encoding="utf-8")
+    print(rendered)
+    return 0 if payload["passed"] else 1
+
+
+def _evaluate_pitching(output_dir: Path) -> int:
+    with session_scope(create_db_engine()) as session:
+        metadata = run_pitching_evaluation(session, output_dir)
+    print(json.dumps(metadata["combined_metrics"], indent=2))
+    return 0
+
+
+def _evaluate_pitching_ablation(output_dir: Path) -> int:
+    with session_scope(create_db_engine()) as session:
+        metadata = run_pitching_ablation(session, output_dir)
+    summary = {
+        label: {
+            "poisson_deviance": result["combined"]["poisson_deviance"],
+            "change": result["poisson_deviance_change"],
+        }
+        for label, result in metadata["results"].items()
+    }
+    print(json.dumps(summary, indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -282,6 +325,25 @@ def main() -> int:
     )
     matchup_audit = subparsers.add_parser("audit-matchups", help="audit Sprint 4 aggregates")
     matchup_audit.add_argument("--output", type=Path)
+    subparsers.add_parser(
+        "build-pitching-features", help="build leakage-safe Sprint 5 pitching state"
+    )
+    pitching_audit = subparsers.add_parser(
+        "audit-pitching-features", help="audit Sprint 5 pitching state"
+    )
+    pitching_audit.add_argument("--output", type=Path)
+    pitching_evaluation = subparsers.add_parser(
+        "evaluate-pitching", help="run Sprint 5 rolling-origin component evaluation"
+    )
+    pitching_evaluation.add_argument(
+        "--output-dir", type=Path, default=Path("data/processed/sprint5")
+    )
+    pitching_ablation = subparsers.add_parser(
+        "evaluate-pitching-ablation", help="run the fixed Sprint 5.5 downstream ablation"
+    )
+    pitching_ablation.add_argument(
+        "--output-dir", type=Path, default=Path("data/processed/sprint5_5")
+    )
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
@@ -312,4 +374,12 @@ def main() -> int:
         return _evaluate_matchups(args.output_dir)
     if args.command == "audit-matchups":
         return _audit_matchups(args.output)
+    if args.command == "build-pitching-features":
+        return _build_pitching_features()
+    if args.command == "audit-pitching-features":
+        return _audit_pitching_features(args.output)
+    if args.command == "evaluate-pitching":
+        return _evaluate_pitching(args.output_dir)
+    if args.command == "evaluate-pitching-ablation":
+        return _evaluate_pitching_ablation(args.output_dir)
     return _show_game(args.game_pk)
