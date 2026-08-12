@@ -182,3 +182,38 @@ assignments, target-season totals, or silent changes to `sprint2_v1`.
 2026 live predictions, or another future locked period, for prospective evaluation.
 
 **Reason:** The team has already inspected and made decisions using 2025 results.
+
+## D021 — Compact matchup aggregates from frozen feeds
+
+**Date:** 2026-08-04
+
+**Decision:** Replay the accepted cached completed-game feeds into normalized
+batter-by-pitcher-hand and player-by-pitch-group game aggregates. Do not alter the cache
+or add a second pitch-level raw store during Sprint 4.
+
+**Reason:** The feeds contain the plate-appearance and pitch classifications needed for
+the planned experiment. Compact aggregates are idempotent, auditable, and avoid millions
+of redundant PostgreSQL pitch rows.
+
+## D022 — Versioned, prior-date matchup state
+
+**Date:** 2026-08-04
+
+**Decision:** Add `sprint4_v1` alongside `sprint3_5_v1`. Estimate batting-order weights,
+handedness rates, starter pitch mix, and batter pitch-group response only from prior dates,
+with fixed shrinkage strengths, offseason decay, sample sizes, and fallback counts.
+
+**Reason:** A new version preserves the accepted foundation and makes every small-sample
+treatment explicit. Date-batched updates prevent target-game and same-day leakage.
+
+## D023 — Do not promote the Sprint 4 bundle
+
+**Date:** 2026-08-04
+
+**Decision:** Retain `sprint3_5_v1` as the modeling reference. Preserve `sprint4_v1` as an
+audited experiment, but do not promote the complete bundle into later models without a
+new, predeclared component ablation.
+
+**Reason:** Relative to `sprint3_5_v1`, combined Poisson deviance worsened by 0.0409 for
+stabilized Poisson and 0.00465 for gradient boosting. Small seasonal improvements were
+not consistent enough to justify added complexity.

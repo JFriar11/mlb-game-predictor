@@ -219,6 +219,15 @@ specifications, common metrics, and artifact writing live under `mlb_predictor.m
 Generated data and model files are ignored; metadata records feature version, dates,
 configuration, seed, dependencies, and results. No output is written into frozen layers.
 
+## Sprint 4 matchup layer
+
+Sprint 4 replays frozen cached feeds into compact `player_game_handed_batting` and
+`player_game_pitch_group` aggregates. A chronological builder copies accepted
+`sprint3_5_v1` rows into `sprint4_v1` and adds lineup weighting, handedness, and pitch-mix
+features. All target-date snapshots are emitted before that date updates state, preserving
+the same doubleheader boundary as earlier feature versions. Samples, fallbacks, as-of
+dates, and source dates remain stored with each row. The source cache is read-only.
+
 ## Specialized-model dependency order
 
 1. Build pregame bullpen usage state.

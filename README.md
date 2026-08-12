@@ -103,6 +103,21 @@ All 2022–2025 evaluation origins are retrospective development evidence. The p
 reserves 2026 live predictions, or another future locked period, for prospective testing.
 See `docs/MULTISEASON_2021_2025_AUDIT.md`.
 
+## Sprint 4 confirmed-lineup matchup layer
+
+From the accepted 2021–2025 database and frozen raw caches, reproduce the normalized
+matchup aggregates, versioned features, validation, and rolling-origin ablation with:
+
+```bash
+make sprint4-audit
+```
+
+The command reads cached completed-game feeds and does not download data or mutate the
+frozen raw layer. It creates compact handedness and pitch-group aggregates, rebuilds
+`sprint4_v1`, and writes ignored evaluation artifacts under `data/processed/sprint4/`.
+The full feature bundle did not improve combined backtest Poisson deviance, so it is not
+promoted over `sprint3_5_v1`. See `docs/SPRINT4_MATCHUP_AUDIT.md`.
+
 ## Quality checks
 
 ```bash

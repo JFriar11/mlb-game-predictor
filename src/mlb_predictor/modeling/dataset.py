@@ -45,6 +45,26 @@ MULTISEASON_FEATURE_COLUMNS: Final[list[str]] = [
     "prior_season_starter_starts",
     "prior_season_bullpen_outs",
 ]
+MATCHUP_FEATURE_COLUMNS: Final[list[str]] = [
+    *MULTISEASON_FEATURE_COLUMNS,
+    "lineup_weighted_on_base_rate",
+    "lineup_weighted_strikeout_rate",
+    "lineup_weighted_home_run_rate",
+    "lineup_projected_plate_appearances",
+    "lineup_vs_starter_hand_pa",
+    "lineup_vs_starter_hand_on_base_rate",
+    "lineup_vs_starter_hand_strikeout_rate",
+    "lineup_vs_starter_hand_home_run_rate",
+    "starter_pitch_group_prior_pitches",
+    "starter_fastball_rate",
+    "starter_breaking_rate",
+    "starter_offspeed_rate",
+    "starter_other_pitch_rate",
+    "lineup_pitch_group_prior_pitches",
+    "lineup_pitch_mix_whiff_rate",
+    "lineup_pitch_mix_hit_in_play_rate",
+    "matchup_fallback_count",
+]
 
 
 def build_modeling_dataset(
@@ -90,8 +110,8 @@ def build_multiseason_modeling_dataset(
     session: Session, feature_version: str = MULTISEASON_FEATURE_VERSION
 ) -> pd.DataFrame:
     """Build a stacked 2021-2025 dataset for an explicit Sprint 3.5 feature version."""
-    if not feature_version.startswith("sprint3_5_"):
-        raise ValueError("Sprint 3.5 requires an explicit sprint3_5 feature version")
+    if not feature_version.startswith(("sprint3_5_", "sprint4_")):
+        raise ValueError("Multi-season modeling requires an explicit versioned feature set")
     rows = session.execute(
         select(PregameFeatureSnapshot, Game)
         .join(Game, PregameFeatureSnapshot.game_pk == Game.game_pk)
@@ -114,7 +134,12 @@ def build_multiseason_modeling_dataset(
         }
         for column in FEATURE_COLUMNS:
             record[column] = getattr(snapshot, column)
-        for column in MULTISEASON_FEATURE_COLUMNS:
+        selected_columns = (
+            MATCHUP_FEATURE_COLUMNS
+            if feature_version.startswith("sprint4_")
+            else MULTISEASON_FEATURE_COLUMNS
+        )
+        for column in selected_columns:
             if column not in record:
                 record[column] = getattr(snapshot, column)
         records.append(record)

@@ -228,4 +228,73 @@ class PregameFeatureSnapshot(Base):
     prior_season_lineup_pa: Mapped[int] = mapped_column(Integer, default=0)
     prior_season_starter_starts: Mapped[int] = mapped_column(Integer, default=0)
     prior_season_bullpen_outs: Mapped[int] = mapped_column(Integer, default=0)
+    lineup_weighted_on_base_rate: Mapped[float | None] = mapped_column(Float)
+    lineup_weighted_strikeout_rate: Mapped[float | None] = mapped_column(Float)
+    lineup_weighted_home_run_rate: Mapped[float | None] = mapped_column(Float)
+    lineup_projected_plate_appearances: Mapped[float | None] = mapped_column(Float)
+    lineup_vs_starter_hand_pa: Mapped[int | None] = mapped_column(Integer)
+    lineup_vs_starter_hand_on_base_rate: Mapped[float | None] = mapped_column(Float)
+    lineup_vs_starter_hand_strikeout_rate: Mapped[float | None] = mapped_column(Float)
+    lineup_vs_starter_hand_home_run_rate: Mapped[float | None] = mapped_column(Float)
+    starter_pitch_group_prior_pitches: Mapped[int | None] = mapped_column(Integer)
+    starter_fastball_rate: Mapped[float | None] = mapped_column(Float)
+    starter_breaking_rate: Mapped[float | None] = mapped_column(Float)
+    starter_offspeed_rate: Mapped[float | None] = mapped_column(Float)
+    starter_other_pitch_rate: Mapped[float | None] = mapped_column(Float)
+    lineup_pitch_group_prior_pitches: Mapped[int | None] = mapped_column(Integer)
+    lineup_pitch_mix_whiff_rate: Mapped[float | None] = mapped_column(Float)
+    lineup_pitch_mix_hit_in_play_rate: Mapped[float | None] = mapped_column(Float)
+    matchup_fallback_count: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class PlayerGameHandedBatting(Base):
+    __tablename__ = "player_game_handed_batting"
+    __table_args__ = (
+        UniqueConstraint(
+            "game_pk", "batter_id", "pitcher_hand", name="uq_handed_batting_game_player_hand"
+        ),
+        CheckConstraint(
+            "plate_appearances >= 0 AND at_bats >= 0 AND hits >= 0 AND walks >= 0 "
+            "AND strikeouts >= 0 AND home_runs >= 0",
+            name="ck_handed_batting_nonnegative",
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    game_pk: Mapped[int] = mapped_column(ForeignKey("games.game_pk", ondelete="CASCADE"))
+    batter_id: Mapped[int] = mapped_column(ForeignKey("players.player_id"))
+    pitcher_hand: Mapped[str] = mapped_column(String(1))
+    plate_appearances: Mapped[int] = mapped_column(Integer)
+    at_bats: Mapped[int] = mapped_column(Integer)
+    hits: Mapped[int] = mapped_column(Integer)
+    walks: Mapped[int] = mapped_column(Integer)
+    strikeouts: Mapped[int] = mapped_column(Integer)
+    home_runs: Mapped[int] = mapped_column(Integer)
+    source: Mapped[str] = mapped_column(String(50))
+    retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class PlayerGamePitchGroup(Base):
+    __tablename__ = "player_game_pitch_groups"
+    __table_args__ = (
+        UniqueConstraint(
+            "game_pk", "player_id", "role", "pitch_group", name="uq_pitch_group_game_player"
+        ),
+        CheckConstraint(
+            "pitches >= 0 AND swings >= 0 AND whiffs >= 0 AND balls_in_play >= 0 "
+            "AND hits_on_contact >= 0",
+            name="ck_pitch_group_nonnegative",
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    game_pk: Mapped[int] = mapped_column(ForeignKey("games.game_pk", ondelete="CASCADE"))
+    player_id: Mapped[int] = mapped_column(ForeignKey("players.player_id"))
+    role: Mapped[str] = mapped_column(String(8))
+    pitch_group: Mapped[str] = mapped_column(String(12))
+    pitches: Mapped[int] = mapped_column(Integer)
+    swings: Mapped[int] = mapped_column(Integer)
+    whiffs: Mapped[int] = mapped_column(Integer)
+    balls_in_play: Mapped[int] = mapped_column(Integer)
+    hits_on_contact: Mapped[int] = mapped_column(Integer)
+    source: Mapped[str] = mapped_column(String(50))
+    retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

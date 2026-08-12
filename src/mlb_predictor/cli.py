@@ -8,16 +8,20 @@ from mlb_predictor.config import get_settings
 from mlb_predictor.db.models import Game
 from mlb_predictor.db.session import create_db_engine, session_scope
 from mlb_predictor.features.builder import build_2025_features, build_multiseason_features
+from mlb_predictor.features.matchup_builder import build_matchup_features
 from mlb_predictor.ingestion.cache import RawJsonCache
 from mlb_predictor.ingestion.client import MlbStatsClient
+from mlb_predictor.ingestion.matchups import rebuild_matchup_aggregates
 from mlb_predictor.ingestion.season import ingest_season
 from mlb_predictor.ingestion.service import ingest_game
 from mlb_predictor.logging import configure_logging
 from mlb_predictor.modeling.evaluation import run_sprint3_evaluation
+from mlb_predictor.modeling.matchup_evaluation import run_sprint4_evaluation
 from mlb_predictor.modeling.multiseason import run_multiseason_evaluation
 from mlb_predictor.reporting import reconstruct_game
 from mlb_predictor.validation.features import audit_features
 from mlb_predictor.validation.games import validate_games
+from mlb_predictor.validation.matchups import audit_matchups
 from mlb_predictor.validation.season import audit_season
 
 MANIFEST_PATH = Path(__file__).parents[2] / "config" / "sprint0_games.json"
@@ -186,6 +190,40 @@ def _evaluate_multiseason(output_dir: Path) -> int:
     return 0
 
 
+def _build_matchup_aggregates() -> int:
+    raw_root = PROJECT_ROOT / "data" / "raw" / "mlb_stats_api"
+    with session_scope(create_db_engine()) as session:
+        result = rebuild_matchup_aggregates(session, raw_root, tuple(range(2021, 2026)))
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+def _build_matchup_features() -> int:
+    with session_scope(create_db_engine()) as session:
+        snapshots = build_matchup_features(session)
+    print(f"Built {len(snapshots)} Sprint 4 feature rows, version=sprint4_v1")
+    return 0
+
+
+def _evaluate_matchups(output_dir: Path) -> int:
+    with session_scope(create_db_engine()) as session:
+        metadata = run_sprint4_evaluation(session, output_dir)
+    print(f"Selected development model: {metadata['selected_development_model']}")
+    print(json.dumps(metadata["ablation"], indent=2))
+    return 0
+
+
+def _audit_matchups(output: Path | None) -> int:
+    with session_scope(create_db_engine()) as session:
+        payload = audit_matchups(session).to_dict()
+    rendered = json.dumps(payload, indent=2)
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered + "\n", encoding="utf-8")
+    print(rendered)
+    return 0 if payload["passed"] else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -230,6 +268,20 @@ def main() -> int:
     multiseason_evaluation.add_argument(
         "--output-dir", type=Path, default=Path("data/processed/sprint3_5")
     )
+    subparsers.add_parser(
+        "build-matchup-aggregates", help="replay cached feeds into Sprint 4 aggregates"
+    )
+    subparsers.add_parser(
+        "build-matchup-features", help="build leakage-safe Sprint 4 matchup features"
+    )
+    matchup_evaluation = subparsers.add_parser(
+        "evaluate-matchups", help="run Sprint 4 rolling-origin ablation"
+    )
+    matchup_evaluation.add_argument(
+        "--output-dir", type=Path, default=Path("data/processed/sprint4")
+    )
+    matchup_audit = subparsers.add_parser("audit-matchups", help="audit Sprint 4 aggregates")
+    matchup_audit.add_argument("--output", type=Path)
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
@@ -252,4 +304,12 @@ def main() -> int:
         return _evaluate_baselines(args.output_dir)
     if args.command == "evaluate-multiseason":
         return _evaluate_multiseason(args.output_dir)
+    if args.command == "build-matchup-aggregates":
+        return _build_matchup_aggregates()
+    if args.command == "build-matchup-features":
+        return _build_matchup_features()
+    if args.command == "evaluate-matchups":
+        return _evaluate_matchups(args.output_dir)
+    if args.command == "audit-matchups":
+        return _audit_matchups(args.output)
     return _show_game(args.game_pk)

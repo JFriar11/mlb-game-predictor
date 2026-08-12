@@ -189,7 +189,7 @@ API, dashboard, or other Sprint 4+ work until the user reviews this Sprint 3 aud
 
 ## Completed plan: Sprint 3.5 — Multi-season data and evaluation foundation
 
-**Status:** Completed 2026-08-03. Awaiting review before Sprint 4.
+**Status:** Completed and approved 2026-08-04.
 
 - Added and independently audited 2021–2024 alongside unchanged raw 2025 artifacts.
 - Added rule-era game metadata and explicit cancelled/special-venue handling.
@@ -204,3 +204,24 @@ API, dashboard, or other Sprint 4+ work until the user reviews this Sprint 3 aud
 ### Stop condition
 
 Stop for review. Do not begin Sprint 4 or any advanced feature/model/application work.
+
+## Completed plan: Sprint 4 — Confirmed-lineup matchup engine
+
+**Status:** Completed 2026-08-04. Awaiting review before Sprint 5.
+
+- Preserved `sprint3_5_v1` and the frozen raw caches; created `sprint4_v1` separately.
+- Replayed cached feeds into compact, idempotent batter-handedness and player pitch-group
+  aggregates without downloading new data.
+- Added empirical prior batting-order weights, projected lineup plate appearances,
+  shrunk batter-versus-hand rates, starter pitch mix, lineup pitch-group response,
+  sample sizes, and explicit fallback counts.
+- Enforced prior-date state updates, including same-day doubleheader isolation, and
+  retained the existing offseason decay policy.
+- Ran 2022–2025 rolling-origin comparisons for all five baseline/model families and exact
+  `sprint3_5_v1` versus `sprint4_v1` ablations for stabilized Poisson and gradient boosting.
+- The full bundle worsened combined Poisson deviance by 0.0409 for stabilized Poisson and
+  0.00465 for gradient boosting. It is retained as an audited experiment, not promoted.
+
+### Stop condition
+
+Stop for review. Do not begin Sprint 5 starter/bullpen modeling or later roadmap work.

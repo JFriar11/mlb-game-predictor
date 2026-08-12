@@ -32,7 +32,7 @@ Initial features:
 
 ## Sprint 3 — Baseline forecasting system
 
-**Completed 2026-08-03; awaiting review before Sprint 4.** Chronologically compared six
+**Completed and approved 2026-08-04.** Chronologically compared six
 baseline/model variants on immutable `sprint2_v1`. The league-average baseline won the
 development selection metric; stabilized Poisson was the best nonconstant model. See
 `docs/MODEL_2025_AUDIT.md`.
@@ -49,13 +49,16 @@ Use chronological validation.
 
 ## Sprint 3.5 — Multi-season data and evaluation foundation
 
-**Completed 2026-08-03; awaiting review.** Added separately cached and hashed 2021–2024
+**Completed and approved 2026-08-04.** Added separately cached and hashed 2021–2024
 seasons, rule-era metadata, versioned prior-history features, and rolling-origin 2022–2025
 development backtests. See `docs/MULTISEASON_2021_2025_AUDIT.md`.
 
 ## Sprint 4 — Confirmed-lineup matchup engine
 
-Sprint 4 remains deferred pending review of Sprint 3.5.
+**Completed 2026-08-04; awaiting review before Sprint 5.** Added a separately versioned,
+leakage-safe confirmed-lineup matchup layer from cached feeds. The full feature bundle
+did not improve the combined rolling-origin backtest and was not promoted. See
+`docs/SPRINT4_MATCHUP_AUDIT.md`.
 
 Add:
 

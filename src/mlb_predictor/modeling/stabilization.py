@@ -52,6 +52,10 @@ def stabilize_small_samples(frame: pd.DataFrame) -> pd.DataFrame:
         "prior_season_lineup_pa",
         "prior_season_starter_starts",
         "prior_season_bullpen_outs",
+        "lineup_vs_starter_hand_pa",
+        "starter_pitch_group_prior_pitches",
+        "lineup_pitch_group_prior_pitches",
+        "matchup_fallback_count",
     ):
         if column in result:
             result[column] = np.log1p(result[column])

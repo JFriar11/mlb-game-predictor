@@ -3,6 +3,7 @@ from typing import Any
 
 import pytest
 
+from mlb_predictor.ingestion.matchups import parse_game_matchups
 from mlb_predictor.ingestion.parser import FeedValidationError, innings_to_outs, parse_game_feed
 
 
@@ -38,3 +39,39 @@ def test_rejects_incomplete_lineup(game_feed: dict[str, Any]) -> None:
     payload["liveData"]["boxscore"]["teams"]["away"]["battingOrder"].pop()
     with pytest.raises(FeedValidationError, match="expected 9"):
         parse_game_feed(payload, 999001)
+
+
+def test_parse_matchup_aggregates() -> None:
+    payload = {
+        "gameData": {"game": {"pk": 7}},
+        "liveData": {
+            "plays": {
+                "allPlays": [
+                    {
+                        "result": {"eventType": "single"},
+                        "about": {"isComplete": True},
+                        "matchup": {
+                            "batter": {"id": 10},
+                            "pitcher": {"id": 20},
+                            "pitchHand": {"code": "R"},
+                        },
+                        "playEvents": [
+                            {
+                                "isPitch": True,
+                                "details": {
+                                    "type": {"code": "FF"},
+                                    "call": {"code": "X"},
+                                    "isInPlay": True,
+                                },
+                            }
+                        ],
+                    }
+                ]
+            }
+        },
+    }
+    handed, pitch_groups = parse_game_matchups(payload)
+    assert handed[0]["plate_appearances"] == 1
+    assert handed[0]["hits"] == 1
+    assert {row["role"] for row in pitch_groups} == {"batter", "pitcher"}
+    assert all(row["pitch_group"] == "fastball" for row in pitch_groups)
