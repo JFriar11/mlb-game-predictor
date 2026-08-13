@@ -247,6 +247,13 @@ the promotion standard, the production/reference feature graph remains unchanged
 venue/weather metadata. Weather is explicitly an observed proxy. Raw and modular park
 architectures are evaluated separately; no environment subset enters the reference graph.
 
+## Sprint 7 distribution and simulation layer
+
+The accepted mean forecast feeds a fold-calibrated negative-binomial probability mass
+function. Analytic convolution produces regulation tie and win probabilities; a training-
+only extra-inning home-win rate resolves ties. Deterministic Monte Carlo generates score
+frequencies and total-run ranges and is tested against the analytic result.
+
 ## Specialized-model dependency order
 
 1. Build pregame bullpen usage state.

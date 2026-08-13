@@ -93,7 +93,7 @@ Add:
 
 ## Sprint 6 — Run environment
 
-**Completed 2026-08-12; awaiting review before Sprint 7.** Built prior-date park context
+**Completed and approved 2026-08-13 as component research.** Built prior-date park context
 and audited venue/weather proxies. Observed weather showed retrospective signal but was
 not production-compatible; park adjustments worsened. See `docs/SPRINT6_ENVIRONMENT_AUDIT.md`.
 
@@ -111,6 +111,10 @@ Add:
 Compare raw-feature and modular adjustment architectures to avoid double counting.
 
 ## Sprint 7 — Run distributions and simulation
+
+**Completed 2026-08-13; awaiting review before Sprint 8.** Selected a fold-only global
+negative-binomial distribution, found negligible paired residual dependence, and validated
+analytic and simulated win probabilities. See `docs/SPRINT7_DISTRIBUTION_SIMULATION_AUDIT.md`.
 
 Compare:
 

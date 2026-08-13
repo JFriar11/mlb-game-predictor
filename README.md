@@ -155,6 +155,16 @@ This rebuilds prior-date park context and evaluates cached-feed venue/weather pr
 Observed weather is not promoted because it is not an archived pregame forecast. See
 `docs/SPRINT6_ENVIRONMENT_AUDIT.md`.
 
+## Sprint 7 distributions and simulation
+
+```bash
+make sprint7-audit
+```
+
+This reproduces the rolling-origin run-distribution comparison, dependence audit,
+extra-inning approximation, analytic win probabilities, and deterministic simulation.
+See `docs/SPRINT7_DISTRIBUTION_SIMULATION_AUDIT.md`.
+
 ## Quality checks
 
 ```bash

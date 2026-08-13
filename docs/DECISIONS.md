@@ -273,3 +273,26 @@ proxies or park adjustments to the accepted run-model version.
 **Reason:** Completed-feed temperature/wind improved retrospective deviance but are not
 archived pregame forecasts. Park adjustments worsened. Static venue attributes improved
 modestly but overlap the baseline's categorical venue feature.
+
+## D029 — Global fold-only negative binomial for run distributions
+
+**Date:** 2026-08-13
+
+**Decision:** Keep the accepted mean model unchanged and use a negative-binomial run
+distribution whose single dispersion parameter is estimated only from each training fold.
+
+**Reason:** Runs are materially overdispersed. Negative binomial improved NLL and ranked
+probability score over Poisson in every season. Recent-season dispersion was only
+marginally better combined and worse in 2025, so the global training estimate is sturdier.
+
+## D030 — Independent regulation distributions and approximate extra innings
+
+**Date:** 2026-08-13
+
+**Decision:** Simulate home and away regulation runs independently. Resolve regulation ties
+with the home-win rate from prior extra-inning training games. Prefer analytic win
+probabilities when available and use simulation for score/total summaries.
+
+**Reason:** Scoring residual correlations range from -0.025 to 0.015, too small to justify
+a joint adjustment. The extra-inning method is transparent and avoids counting ties as a
+win or loss, but remains an approximation.

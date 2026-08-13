@@ -269,7 +269,7 @@ Stop for review. Do not begin Sprint 6 or any weather, park, simulation, API, or
 
 ## Completed plan: Sprint 6 — Run environment
 
-**Status:** Completed 2026-08-12. Awaiting review before Sprint 7.
+**Status:** Completed and approved 2026-08-13 as a component-research milestone.
 
 - Built 12,148 versioned prior-date park and cached-feed environment snapshots.
 - Compared rolling park, venue physical, observed-weather proxy, raw bundle, modular park,
@@ -283,3 +283,21 @@ Stop for review. Do not begin Sprint 6 or any weather, park, simulation, API, or
 ### Stop condition
 
 Stop for review. Do not begin Sprint 7 simulation/distribution or application work.
+
+## Completed plan: Sprint 7 — Run distribution and game simulation
+
+**Status:** Completed 2026-08-13. Awaiting review before Sprint 8.
+
+- Consumed immutable `sprint3_5_v1` and its accepted gradient-boosting mean configuration.
+- Compared Poisson, global fold-only negative binomial, recent-training-season negative
+  binomial, and a smoothed direct 0–12+ discrete distribution.
+- Selected global fold-only negative binomial for robustness: it materially improved NLL
+  and ranked probability score in every season without evaluation-fold parameter fitting.
+- Verified material overdispersion and near-zero paired scoring-residual dependence.
+- Added exact analytic win probabilities, a prior-extra-inning home-win approximation,
+  and deterministic regulation simulations validated against analytic probabilities.
+- Evaluated win Brier score, log loss, calibration, intervals, and simulation stability.
+
+### Stop condition
+
+Stop for review. Do not begin Sprint 8 calibration/final backtest or application work.

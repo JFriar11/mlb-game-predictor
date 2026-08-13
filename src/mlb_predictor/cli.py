@@ -17,6 +17,7 @@ from mlb_predictor.ingestion.matchups import rebuild_matchup_aggregates
 from mlb_predictor.ingestion.season import ingest_season
 from mlb_predictor.ingestion.service import ingest_game
 from mlb_predictor.logging import configure_logging
+from mlb_predictor.modeling.distribution_evaluation import run_distribution_evaluation
 from mlb_predictor.modeling.environment_evaluation import run_environment_evaluation
 from mlb_predictor.modeling.evaluation import run_sprint3_evaluation
 from mlb_predictor.modeling.matchup_evaluation import run_sprint4_evaluation
@@ -307,6 +308,14 @@ def _evaluate_environment(output_dir: Path) -> int:
     return 0
 
 
+def _evaluate_distributions(output_dir: Path) -> int:
+    with session_scope(create_db_engine()) as session:
+        metadata = run_distribution_evaluation(session, output_dir)
+    print(json.dumps(metadata["combined_distribution_metrics"], indent=2))
+    print(json.dumps(metadata["win_probability_metrics"], indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -397,6 +406,12 @@ def main() -> int:
     environment_evaluation.add_argument(
         "--output-dir", type=Path, default=Path("data/processed/sprint6")
     )
+    distribution_evaluation = subparsers.add_parser(
+        "evaluate-distributions", help="run Sprint 7 distribution and simulation audit"
+    )
+    distribution_evaluation.add_argument(
+        "--output-dir", type=Path, default=Path("data/processed/sprint7")
+    )
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
@@ -441,4 +456,6 @@ def main() -> int:
         return _audit_environment_features(args.output)
     if args.command == "evaluate-environment":
         return _evaluate_environment(args.output_dir)
+    if args.command == "evaluate-distributions":
+        return _evaluate_distributions(args.output_dir)
     return _show_game(args.game_pk)
