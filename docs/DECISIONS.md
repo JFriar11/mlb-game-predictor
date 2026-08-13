@@ -296,3 +296,25 @@ probabilities when available and use simulation for score/total summaries.
 **Reason:** Scoring residual correlations range from -0.025 to 0.015, too small to justify
 a joint adjustment. The extra-inning method is transparent and avoids counting ties as a
 win or loss, but remains an approximation.
+
+## D031 — Nested chronological Platt calibration
+
+**Date:** 2026-08-13
+
+**Decision:** Calibrate raw home-win probabilities with logistic regression on their
+logit, using a chronological block distinct from model training and evaluation. Freeze
+this in `accepted_v1_2026_prospective`.
+
+**Reason:** Platt improved Brier, log loss, and ECE and was more stable than beta. Isotonic
+generated harmful extreme probabilities from small calibration samples.
+
+## D032 — Prospective multi-metric promotion gate
+
+**Date:** 2026-08-13
+
+**Decision:** A future version must improve prospective run NLL/RPS and win Brier/log loss,
+with no material calibration or interval regression, across at least 500 predictions or a
+completed season. Retrospective gains alone cannot promote.
+
+**Reason:** 2021–2025 has been repeatedly inspected. This avoids replacing the model for
+one noisy slice or favorable retrospective metric.

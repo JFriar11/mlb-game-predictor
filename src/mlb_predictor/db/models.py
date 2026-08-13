@@ -10,6 +10,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -370,3 +371,40 @@ class EnvironmentFeatureSnapshot(Base):
     weather_observed_proxy: Mapped[bool] = mapped_column(Boolean)
     fallback_count: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class LivePredictionRecord(Base):
+    __tablename__ = "live_prediction_records"
+    __table_args__ = (
+        UniqueConstraint(
+            "game_pk", "prediction_timestamp", "model_version", name="uq_live_prediction"
+        ),
+        CheckConstraint(
+            "expected_home_runs >= 0 AND expected_away_runs >= 0 "
+            "AND raw_home_win_probability BETWEEN 0 AND 1 "
+            "AND calibrated_home_win_probability BETWEEN 0 AND 1",
+            name="ck_live_prediction_values",
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    game_pk: Mapped[int] = mapped_column(Integer)
+    prediction_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    scheduled_start_time_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    lineup_confirmation_state: Mapped[str] = mapped_column(String(30))
+    home_starter_id: Mapped[int | None] = mapped_column(Integer)
+    away_starter_id: Mapped[int | None] = mapped_column(Integer)
+    feature_version: Mapped[str] = mapped_column(String(40))
+    model_version: Mapped[str] = mapped_column(String(40))
+    expected_home_runs: Mapped[float] = mapped_column(Float)
+    expected_away_runs: Mapped[float] = mapped_column(Float)
+    distribution_name: Mapped[str] = mapped_column(String(40))
+    distribution_parameters_json: Mapped[str] = mapped_column(Text)
+    raw_home_win_probability: Mapped[float] = mapped_column(Float)
+    calibrated_home_win_probability: Mapped[float] = mapped_column(Float)
+    prediction_intervals_json: Mapped[str] = mapped_column(Text)
+    extra_inning_adjustment: Mapped[float] = mapped_column(Float)
+    data_quality_warnings_json: Mapped[str] = mapped_column(Text)
+    observed_home_runs: Mapped[int | None] = mapped_column(Integer)
+    observed_away_runs: Mapped[int | None] = mapped_column(Integer)
+    observed_home_win: Mapped[bool | None] = mapped_column(Boolean)
+    observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

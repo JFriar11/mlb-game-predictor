@@ -165,6 +165,16 @@ This reproduces the rolling-origin run-distribution comparison, dependence audit
 extra-inning approximation, analytic win probabilities, and deterministic simulation.
 See `docs/SPRINT7_DISTRIBUTION_SIMULATION_AUDIT.md`.
 
+## Sprint 8 calibration and frozen specification
+
+```bash
+make sprint8-audit
+```
+
+This reproduces Sprint 7, runs nested chronological calibration, and audits the frozen
+`accepted_v1_2026_prospective` specification. See
+`docs/SPRINT8_FINAL_RETROSPECTIVE_AUDIT.md`.
+
 ## Quality checks
 
 ```bash

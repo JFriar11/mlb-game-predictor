@@ -112,7 +112,7 @@ Compare raw-feature and modular adjustment architectures to avoid double countin
 
 ## Sprint 7 — Run distributions and simulation
 
-**Completed 2026-08-13; awaiting review before Sprint 8.** Selected a fold-only global
+**Completed and approved 2026-08-13.** Selected a fold-only global
 negative-binomial distribution, found negligible paired residual dependence, and validated
 analytic and simulated win probabilities. See `docs/SPRINT7_DISTRIBUTION_SIMULATION_AUDIT.md`.
 
@@ -127,6 +127,10 @@ Compare:
 Handle ties and extra innings.
 
 ## Sprint 8 — Calibration and final backtest
+
+**Completed 2026-08-13; awaiting review.** Selected nested chronological Platt calibration,
+froze the prospective specification, and added the prediction-record contract. See
+`docs/SPRINT8_FINAL_RETROSPECTIVE_AUDIT.md`.
 
 Evaluate:
 

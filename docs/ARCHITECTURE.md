@@ -254,6 +254,12 @@ function. Analytic convolution produces regulation tie and win probabilities; a 
 only extra-inning home-win rate resolves ties. Deterministic Monte Carlo generates score
 frequencies and total-run ranges and is tested against the analytic result.
 
+## Sprint 8 calibration and prospective record
+
+Platt calibration fits on a chronological block distinct from mean/distribution training
+and evaluation. `live_prediction_records` is the append-only prospective contract for raw
+and calibrated predictions plus later outcomes; Sprint 8 does not automate its population.
+
 ## Specialized-model dependency order
 
 1. Build pregame bullpen usage state.

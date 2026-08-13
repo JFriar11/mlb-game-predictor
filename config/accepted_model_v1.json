@@ -1,0 +1,34 @@
+{
+  "model_version": "accepted_v1_2026_prospective",
+  "feature_version": "sprint3_5_v1",
+  "mean_model": {
+    "type": "HistGradientBoostingRegressor",
+    "loss": "poisson",
+    "learning_rate": 0.05,
+    "max_iter": 200,
+    "max_leaf_nodes": 15,
+    "min_samples_leaf": 30,
+    "l2_regularization": 1.0,
+    "random_seed": 20250318
+  },
+  "distribution": {
+    "type": "negative_binomial",
+    "dispersion": "single global parameter estimated from training data only",
+    "regulation_home_away_dependence": "independent"
+  },
+  "calibration": {
+    "type": "Platt logistic calibration on logit raw home-win probability",
+    "fit_policy": "chronologically later calibration window, never evaluation games"
+  },
+  "extra_innings": {
+    "type": "prior-training extra-inning home-win-rate approximation"
+  },
+  "training_protocol": "expanding rolling origin; all features and parameters strictly prior",
+  "prospective_reserve": "2026 outcomes excluded from selection and calibration",
+  "known_limitations": [
+    "Historical lineups reconstruct actual starters rather than archived T-minus-30 states.",
+    "Extra innings do not model ghost runners, innings, or relievers explicitly.",
+    "Observed completed-game weather is not an accepted model input.",
+    "Retrospective 2021-2025 results are development evidence, not prospective validation."
+  ]
+}

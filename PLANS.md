@@ -286,7 +286,7 @@ Stop for review. Do not begin Sprint 7 simulation/distribution or application wo
 
 ## Completed plan: Sprint 7 — Run distribution and game simulation
 
-**Status:** Completed 2026-08-13. Awaiting review before Sprint 8.
+**Status:** Completed and approved 2026-08-13.
 
 - Consumed immutable `sprint3_5_v1` and its accepted gradient-boosting mean configuration.
 - Compared Poisson, global fold-only negative binomial, recent-training-season negative
@@ -301,3 +301,18 @@ Stop for review. Do not begin Sprint 7 simulation/distribution or application wo
 ### Stop condition
 
 Stop for review. Do not begin Sprint 8 calibration/final backtest or application work.
+
+## Completed plan: Sprint 8 — Calibration and final retrospective backtest
+
+**Status:** Completed 2026-08-13. Awaiting review before prospective work.
+
+- Used distinct prior-season model fitting, first-40%-of-dates calibration, and remaining-date evaluation.
+- Selected Platt calibration over raw, isotonic, and beta alternatives.
+- Re-audited negative-binomial intervals and retrospective point/distribution metrics.
+- Froze `accepted_v1_2026_prospective` in `config/accepted_model_v1.json`.
+- Added migration `0010` and the prospective prediction-record contract without automation.
+- Defined prospective, multi-metric future promotion requirements.
+
+### Stop condition
+
+Stop for review. Do not begin live automation, APIs, dashboard, cloud, or new model research.

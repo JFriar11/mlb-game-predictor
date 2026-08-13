@@ -17,6 +17,7 @@ from mlb_predictor.ingestion.matchups import rebuild_matchup_aggregates
 from mlb_predictor.ingestion.season import ingest_season
 from mlb_predictor.ingestion.service import ingest_game
 from mlb_predictor.logging import configure_logging
+from mlb_predictor.modeling.calibration_evaluation import run_calibration_evaluation
 from mlb_predictor.modeling.distribution_evaluation import run_distribution_evaluation
 from mlb_predictor.modeling.environment_evaluation import run_environment_evaluation
 from mlb_predictor.modeling.evaluation import run_sprint3_evaluation
@@ -316,6 +317,20 @@ def _evaluate_distributions(output_dir: Path) -> int:
     return 0
 
 
+def _evaluate_calibration(output_dir: Path) -> int:
+    with session_scope(create_db_engine()) as session:
+        metadata = run_calibration_evaluation(
+            session, PROJECT_ROOT / "data" / "processed" / "sprint7", output_dir
+        )
+    print(f"Selected calibration: {metadata['selected_calibration']}")
+    print(
+        json.dumps(
+            {name: value["combined"] for name, value in metadata["results"].items()}, indent=2
+        )
+    )
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -412,6 +427,12 @@ def main() -> int:
     distribution_evaluation.add_argument(
         "--output-dir", type=Path, default=Path("data/processed/sprint7")
     )
+    calibration_evaluation = subparsers.add_parser(
+        "evaluate-calibration", help="run Sprint 8 nested chronological calibration audit"
+    )
+    calibration_evaluation.add_argument(
+        "--output-dir", type=Path, default=Path("data/processed/sprint8")
+    )
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
@@ -458,4 +479,6 @@ def main() -> int:
         return _evaluate_environment(args.output_dir)
     if args.command == "evaluate-distributions":
         return _evaluate_distributions(args.output_dir)
+    if args.command == "evaluate-calibration":
+        return _evaluate_calibration(args.output_dir)
     return _show_game(args.game_pk)
