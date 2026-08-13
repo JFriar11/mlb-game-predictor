@@ -77,7 +77,7 @@ state bundle was not promoted. See `docs/SPRINT5_PITCHING_AUDIT.md`.
 
 ## Sprint 5.5 — Downstream pitching-state ablation
 
-**Completed 2026-08-12; awaiting review before Sprint 6.** Compared eleven predeclared
+**Completed and approved 2026-08-12.** Compared eleven predeclared
 pitching subsets against immutable `sprint3_5_v1`. No subset improved robustly enough for
 promotion; no new feature/model version was created. See
 `docs/SPRINT5_5_DOWNSTREAM_ABLATION.md`.
@@ -92,6 +92,10 @@ Add:
 - Expected bullpen innings and quality mixture
 
 ## Sprint 6 — Run environment
+
+**Completed 2026-08-12; awaiting review before Sprint 7.** Built prior-date park context
+and audited venue/weather proxies. Observed weather showed retrospective signal but was
+not production-compatible; park adjustments worsened. See `docs/SPRINT6_ENVIRONMENT_AUDIT.md`.
 
 Add:
 

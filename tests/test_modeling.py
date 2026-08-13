@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from mlb_predictor.modeling.dataset import FEATURE_COLUMNS, model_features
+from mlb_predictor.modeling.environment_evaluation import ENVIRONMENT_GROUPS
 from mlb_predictor.modeling.models import MODEL_SPECS
 from mlb_predictor.modeling.multiseason import rolling_origin_split
 from mlb_predictor.modeling.pitching_ablation import ABLATION_GROUPS
@@ -92,3 +93,16 @@ def test_sprint5_5_ablation_matrix_is_fixed_and_target_free() -> None:
     assert "starter_outs" not in flattened
     assert "starter_pitches" not in flattened
     assert "bullpen_outs" not in flattened
+
+
+def test_sprint6_environment_groups_are_target_free() -> None:
+    assert set(ENVIRONMENT_GROUPS) == {
+        "baseline",
+        "rolling_park_factor",
+        "venue_physical",
+        "observed_weather_proxy",
+        "raw_environment_bundle",
+    }
+    flattened = {item for group in ENVIRONMENT_GROUPS.values() for item in group}
+    assert "runs_scored" not in flattened
+    assert "home_team_runs" not in flattened

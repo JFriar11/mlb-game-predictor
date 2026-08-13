@@ -339,3 +339,34 @@ class PitchingFeatureSnapshot(Base):
     high_usage_available: Mapped[int] = mapped_column(Integer)
     fallback_count: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class EnvironmentFeatureSnapshot(Base):
+    __tablename__ = "environment_feature_snapshots"
+    __table_args__ = (
+        UniqueConstraint("game_pk", "feature_version", name="uq_environment_features"),
+        CheckConstraint(
+            "park_prior_games >= 0 AND park_factor > 0 AND wind_speed_mph >= 0",
+            name="ck_environment_features_valid",
+        ),
+        Index("ix_environment_features_version_as_of", "feature_version", "as_of"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    game_pk: Mapped[int] = mapped_column(ForeignKey("games.game_pk", ondelete="CASCADE"))
+    feature_version: Mapped[str] = mapped_column(String(40))
+    as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    max_source_game_date: Mapped[date | None] = mapped_column(Date)
+    park_prior_games: Mapped[int] = mapped_column(Integer)
+    park_factor: Mapped[float] = mapped_column(Float)
+    temperature_f: Mapped[float] = mapped_column(Float)
+    wind_speed_mph: Mapped[float] = mapped_column(Float)
+    wind_out_component: Mapped[float] = mapped_column(Float)
+    wind_cross_component: Mapped[float] = mapped_column(Float)
+    elevation_ft: Mapped[float] = mapped_column(Float)
+    roof_type: Mapped[str] = mapped_column(String(30))
+    roof_closed_proxy: Mapped[bool] = mapped_column(Boolean)
+    day_game: Mapped[bool] = mapped_column(Boolean)
+    artificial_turf: Mapped[bool] = mapped_column(Boolean)
+    weather_observed_proxy: Mapped[bool] = mapped_column(Boolean)
+    fallback_count: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

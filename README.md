@@ -145,6 +145,16 @@ No subset met the robust promotion standard. Available-reliever quality had the 
 combined Poisson-deviance change but worsened three of four season origins, so no new
 feature/model version was created. See `docs/SPRINT5_5_DOWNSTREAM_ABLATION.md`.
 
+## Sprint 6 run environment
+
+```bash
+make sprint6-audit
+```
+
+This rebuilds prior-date park context and evaluates cached-feed venue/weather proxies.
+Observed weather is not promoted because it is not an archived pregame forecast. See
+`docs/SPRINT6_ENVIRONMENT_AUDIT.md`.
+
 ## Quality checks
 
 ```bash

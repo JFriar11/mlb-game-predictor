@@ -251,7 +251,7 @@ Stop for review. Do not begin Sprint 6 run-environment work or later roadmap wor
 
 ## Completed plan: Sprint 5.5 — Downstream pitching-state ablation
 
-**Status:** Completed 2026-08-12. Awaiting review before Sprint 6.
+**Status:** Completed and approved 2026-08-12.
 
 - Predeclared eleven individual and compact pitching-state additions plus the immutable
   `sprint3_5_v1` baseline before evaluation.
@@ -266,3 +266,20 @@ Stop for review. Do not begin Sprint 6 run-environment work or later roadmap wor
 ### Stop condition
 
 Stop for review. Do not begin Sprint 6 or any weather, park, simulation, API, or dashboard work.
+
+## Completed plan: Sprint 6 — Run environment
+
+**Status:** Completed 2026-08-12. Awaiting review before Sprint 7.
+
+- Built 12,148 versioned prior-date park and cached-feed environment snapshots.
+- Compared rolling park, venue physical, observed-weather proxy, raw bundle, modular park,
+  and park-adjusted rolling architectures against immutable `sprint3_5_v1`.
+- Weather proxies improved combined deviance by 0.00775 but were not promoted because they
+  are completed-feed observations rather than archived pregame forecasts.
+- Venue physical attributes improved by 0.00402 but overlap learned venue identity.
+- Rolling and modular park adjustments worsened, confirming double-counting risk.
+- Humidity, pressure, explicit roof state, and independent defense data remain unavailable.
+
+### Stop condition
+
+Stop for review. Do not begin Sprint 7 simulation/distribution or application work.

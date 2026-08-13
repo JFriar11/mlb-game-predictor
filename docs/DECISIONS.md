@@ -262,3 +262,14 @@ candidate, not as a promoted run-model input.
 was concentrated in 2022 and the subset worsened 2023, 2024, and 2025. Other improvements
 were smaller, while every predeclared compact group worsened the primary metric. Selecting
 on the combined result alone would overstate evidence after repeated historical review.
+
+## D028 — Environment proxies are not promoted
+
+**Date:** 2026-08-12
+
+**Decision:** Retain `sprint6_v1` as an audited component layer. Do not add its weather
+proxies or park adjustments to the accepted run-model version.
+
+**Reason:** Completed-feed temperature/wind improved retrospective deviance but are not
+archived pregame forecasts. Park adjustments worsened. Static venue attributes improved
+modestly but overlap the baseline's categorical venue feature.

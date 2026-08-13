@@ -241,6 +241,12 @@ Sprint 5.5 joins this accepted state to `sprint3_5_v1` only in the modeling data
 runs a fixed subset matrix without persisting a new feature version. Because no subset met
 the promotion standard, the production/reference feature graph remains unchanged.
 
+## Sprint 6 environment layer
+
+`environment_feature_snapshots` stores prior-date shrunk park context and cached-feed
+venue/weather metadata. Weather is explicitly an observed proxy. Raw and modular park
+architectures are evaluated separately; no environment subset enters the reference graph.
+
 ## Specialized-model dependency order
 
 1. Build pregame bullpen usage state.

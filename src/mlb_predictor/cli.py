@@ -8,6 +8,7 @@ from mlb_predictor.config import get_settings
 from mlb_predictor.db.models import Game
 from mlb_predictor.db.session import create_db_engine, session_scope
 from mlb_predictor.features.builder import build_2025_features, build_multiseason_features
+from mlb_predictor.features.environment_builder import build_environment_features
 from mlb_predictor.features.matchup_builder import build_matchup_features
 from mlb_predictor.features.pitching_builder import build_pitching_features
 from mlb_predictor.ingestion.cache import RawJsonCache
@@ -16,12 +17,14 @@ from mlb_predictor.ingestion.matchups import rebuild_matchup_aggregates
 from mlb_predictor.ingestion.season import ingest_season
 from mlb_predictor.ingestion.service import ingest_game
 from mlb_predictor.logging import configure_logging
+from mlb_predictor.modeling.environment_evaluation import run_environment_evaluation
 from mlb_predictor.modeling.evaluation import run_sprint3_evaluation
 from mlb_predictor.modeling.matchup_evaluation import run_sprint4_evaluation
 from mlb_predictor.modeling.multiseason import run_multiseason_evaluation
 from mlb_predictor.modeling.pitching_ablation import run_pitching_ablation
 from mlb_predictor.modeling.pitching_evaluation import run_pitching_evaluation
 from mlb_predictor.reporting import reconstruct_game
+from mlb_predictor.validation.environment import audit_environment_features
 from mlb_predictor.validation.features import audit_features
 from mlb_predictor.validation.games import validate_games
 from mlb_predictor.validation.matchups import audit_matchups
@@ -267,6 +270,43 @@ def _evaluate_pitching_ablation(output_dir: Path) -> int:
     return 0
 
 
+def _build_environment_features() -> int:
+    raw_root = PROJECT_ROOT / "data" / "raw" / "mlb_stats_api"
+    with session_scope(create_db_engine()) as session:
+        snapshots = build_environment_features(session, raw_root)
+    print(f"Built {len(snapshots)} Sprint 6 environment rows, version=sprint6_v1")
+    return 0
+
+
+def _audit_environment_features(output: Path | None) -> int:
+    with session_scope(create_db_engine()) as session:
+        payload = audit_environment_features(session).to_dict()
+    rendered = json.dumps(payload, indent=2)
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered + "\n", encoding="utf-8")
+    print(rendered)
+    return 0 if payload["passed"] else 1
+
+
+def _evaluate_environment(output_dir: Path) -> int:
+    with session_scope(create_db_engine()) as session:
+        metadata = run_environment_evaluation(session, output_dir)
+    print(
+        json.dumps(
+            {
+                label: {
+                    "poisson_deviance": result["combined"]["poisson_deviance"],
+                    "change": result["poisson_deviance_change"],
+                }
+                for label, result in metadata["results"].items()
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -344,6 +384,19 @@ def main() -> int:
     pitching_ablation.add_argument(
         "--output-dir", type=Path, default=Path("data/processed/sprint5_5")
     )
+    subparsers.add_parser(
+        "build-environment-features", help="build Sprint 6 cached-feed environment state"
+    )
+    environment_audit = subparsers.add_parser(
+        "audit-environment-features", help="audit Sprint 6 environment state"
+    )
+    environment_audit.add_argument("--output", type=Path)
+    environment_evaluation = subparsers.add_parser(
+        "evaluate-environment", help="run Sprint 6 raw and modular environment evaluation"
+    )
+    environment_evaluation.add_argument(
+        "--output-dir", type=Path, default=Path("data/processed/sprint6")
+    )
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
@@ -382,4 +435,10 @@ def main() -> int:
         return _evaluate_pitching(args.output_dir)
     if args.command == "evaluate-pitching-ablation":
         return _evaluate_pitching_ablation(args.output_dir)
+    if args.command == "build-environment-features":
+        return _build_environment_features()
+    if args.command == "audit-environment-features":
+        return _audit_environment_features(args.output)
+    if args.command == "evaluate-environment":
+        return _evaluate_environment(args.output_dir)
     return _show_game(args.game_pk)
