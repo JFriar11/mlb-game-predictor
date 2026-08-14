@@ -48,9 +48,13 @@ def ingest_season(
     season: int,
     exception_path: Path,
 ) -> SeasonIngestionResult:
-    if season not in range(2021, 2026):
-        raise ValueError("Historical ingestion is restricted to seasons 2021-2025")
-    schedule = cache.schedule(season, lambda: client.get_regular_season_schedule(season))
+    if season not in range(2021, 2027):
+        raise ValueError("Ingestion is restricted to seasons 2021-2026")
+    schedule = cache.schedule(
+        season,
+        lambda: client.get_regular_season_schedule(season),
+        refresh=season == 2026,
+    )
     game_ids = discover_completed_game_ids(schedule, season)
     exceptions: list[IngestionException] = []
     ingested = 0

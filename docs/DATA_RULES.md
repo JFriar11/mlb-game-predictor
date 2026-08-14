@@ -39,6 +39,11 @@ Sprint 0 reconstructs the actual starting batting order from the completed MLB g
 It does not claim that the feed is a historical T-minus-30 snapshot. Only the nine initial
 batting-order IDs and their initial boxscore positions are stored; substitutions are not.
 
+Live confirmation means the MLB live feed exposes nine initial batting-order IDs for both
+teams. The feed lacks a dependable separate confirmation boolean. Only official records
+generated before first pitch after deployment count as prospective; dry-run, diagnostic,
+and backfill records never do.
+
 ## Rolling metrics
 
 All rolling metrics must:

@@ -318,3 +318,25 @@ completed season. Retrospective gains alone cannot promote.
 
 **Reason:** 2021–2025 has been repeatedly inspected. This avoids replacing the model for
 one noisy slice or favorable retrospective metric.
+
+## D033 — Live confirmation and official-record rule
+
+**Date:** 2026-08-13
+
+**Decision:** Treat two nine-player MLB live-feed batting orders as confirmed. Create at
+most one official prediction per game/model in the 20–40 minute window. Other snapshots
+are diagnostic and never prospective.
+
+## D034 — Frozen artifact and 2026 state separation
+
+**Date:** 2026-08-13
+
+**Decision:** Hash fitted components from 2021–2025. Completed 2026 games may update live
+feature history only and never refit the accepted components.
+
+## D035 — Prospective launch boundary
+
+**Date:** 2026-08-13
+
+**Decision:** Persist `2026-08-14T00:25:28.171973+00:00` once. A qualifying game must start
+after it, and its official prediction must be recorded after it but before first pitch.

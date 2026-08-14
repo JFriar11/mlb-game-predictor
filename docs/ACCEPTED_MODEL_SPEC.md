@@ -14,3 +14,6 @@
 Observed weather and Sprint 4–6 component features are not accepted run-model inputs.
 Future promotion requires prospective multi-metric improvement over at least 500 games or
 one completed season, with no meaningful calibration or coverage regression.
+
+Sprint 9 materializes the fitted generated artifact under `data/processed/` and records
+model, calibration, distribution, feature, code, retrieval, and cutoff provenance.

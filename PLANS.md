@@ -316,3 +316,29 @@ Stop for review. Do not begin Sprint 8 calibration/final backtest or application
 ### Stop condition
 
 Stop for review. Do not begin live automation, APIs, dashboard, cloud, or new model research.
+
+## Completed plan: Sprint 9 — Live pregame pipeline and prospective evaluation
+
+**Status:** Completed 2026-08-13. Awaiting review.
+
+- Froze a hashed accepted artifact using 2021–2025 only.
+- Added discovery, lineup gating, as-of features, immutable official predictions,
+  diagnostic snapshots, settlement, and prospective-only scoring.
+- Dry-run verification wrote zero official predictions; prospective count remains zero.
+
+### Stop condition
+
+Stop for review. Do not begin FastAPI, React, Azure, dashboard, or live weather work.
+
+## Completed plan: Sprint 9.5 — 2026 state bootstrap and prospective launch
+
+**Status:** Completed 2026-08-13. Awaiting review.
+
+- Ingested and reconciled 1,822 completed 2026 games as feature history.
+- Preserved the accepted artifact hash and performed no model fitting or comparison.
+- Persisted launch boundary `2026-08-14T00:25:28.171973+00:00`.
+- Added repeat-safe `daily-live` and `settle-live`; prospective count remains zero.
+
+### Stop condition
+
+Stop before scheduling, application, cloud, dashboard, weather, or modeling work.

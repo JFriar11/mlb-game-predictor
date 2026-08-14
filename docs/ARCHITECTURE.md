@@ -260,6 +260,12 @@ Platt calibration fits on a chronological block distinct from mean/distribution 
 and evaluation. `live_prediction_records` is the append-only prospective contract for raw
 and calibrated predictions plus later outcomes; Sprint 8 does not automate its population.
 
+## Sprint 9 live pipeline
+
+`predict-date` requires two nine-player batting orders. Live features admit only completed
+prior-date outcomes before an explicit cutoff. A partial unique index preserves one official
+game/model prediction; settlement changes observed fields only.
+
 ## Specialized-model dependency order
 
 1. Build pregame bullpen usage state.

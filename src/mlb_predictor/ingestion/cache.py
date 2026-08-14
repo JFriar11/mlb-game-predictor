@@ -35,7 +35,17 @@ class RawJsonCache:
     ) -> dict[str, Any]:
         return self.get_or_fetch(f"{season}/games/{game_pk}.json.gz", fetch)
 
-    def schedule(self, season: int, fetch: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    def schedule(
+        self, season: int, fetch: Callable[[], dict[str, Any]], *, refresh: bool = False
+    ) -> dict[str, Any]:
+        path = self.root / f"{season}/schedule.json.gz"
+        if refresh and path.exists():
+            payload = fetch()
+            temporary = path.with_suffix(path.suffix + ".tmp")
+            with gzip.open(temporary, "wt", encoding="utf-8") as handle:
+                json.dump(payload, handle, separators=(",", ":"))
+            temporary.replace(path)
+            return payload
         return self.get_or_fetch(f"{season}/schedule.json.gz", fetch)
 
     def build_manifest(self, season: int) -> dict[str, Any]:

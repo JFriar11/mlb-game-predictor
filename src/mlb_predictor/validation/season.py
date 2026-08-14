@@ -1,6 +1,6 @@
 from collections import Counter
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import distinct, func, select, union
@@ -21,6 +21,7 @@ class SeasonAudit:
     games: int
     first_game_date: date | None
     last_game_date: date | None
+    latest_completed_game_timestamp: datetime | None
     teams: int
     venues: int
     players: int
@@ -53,7 +54,7 @@ class SeasonAudit:
             and not self.incomplete_lineup_sides
             and self.games_with_batting == self.games
             and self.games_with_pitching == self.games
-            and self.min_games_per_team >= 161
+            and (self.season == 2026 or self.min_games_per_team >= 161)
             and self.max_games_per_team <= 162
             and self.batting_run_discrepancies == 0
             and self.pitching_run_discrepancies == 0
@@ -67,8 +68,13 @@ class SeasonAudit:
 
 def audit_season(session: Session, season: int = 2025) -> SeasonAudit:
     game_filter = Game.season == season
-    games, first_date, last_date = session.execute(
-        select(func.count(), func.min(Game.game_date), func.max(Game.game_date)).where(game_filter)
+    games, first_date, last_date, latest_timestamp = session.execute(
+        select(
+            func.count(),
+            func.min(Game.game_date),
+            func.max(Game.game_date),
+            func.max(Game.scheduled_start_time_utc),
+        ).where(game_filter)
     ).one()
     game_ids = select(Game.game_pk).where(game_filter)
     incomplete_starters = tuple(
@@ -160,6 +166,7 @@ def audit_season(session: Session, season: int = 2025) -> SeasonAudit:
         games=int(games),
         first_game_date=first_date,
         last_game_date=last_date,
+        latest_completed_game_timestamp=latest_timestamp,
         teams=len(team_games),
         venues=int(
             session.scalar(select(func.count(distinct(Game.venue_id))).where(game_filter)) or 0

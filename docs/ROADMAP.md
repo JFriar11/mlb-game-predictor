@@ -147,6 +147,9 @@ Freeze an untouched final test period.
 
 ## Sprint 9 — Live prediction pipeline
 
+**Completed 2026-08-13; awaiting review.** Added CLI discovery, confirmed-lineup gating,
+frozen-model prediction, immutable official records, settlement, and prospective scoring.
+
 Automate:
 
 - Daily game discovery
@@ -157,6 +160,11 @@ Automate:
 - Feature generation
 - Predictions
 - Data-quality warnings
+
+## Sprint 9.5 — 2026 state bootstrap and prospective launch
+
+**Completed 2026-08-13; awaiting review.** Bootstrapped and audited 2026 state, persisted
+the launch boundary, and added repeat-safe daily and settlement commands.
 
 ## Sprint 10 — Application and deployment
 

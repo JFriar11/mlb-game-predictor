@@ -12,6 +12,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -385,6 +386,13 @@ class LivePredictionRecord(Base):
             "AND calibrated_home_win_probability BETWEEN 0 AND 1",
             name="ck_live_prediction_values",
         ),
+        Index(
+            "uq_live_official_prediction",
+            "game_pk",
+            "model_version",
+            unique=True,
+            postgresql_where=text("is_official IS TRUE"),
+        ),
     )
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     game_pk: Mapped[int] = mapped_column(Integer)
@@ -408,3 +416,46 @@ class LivePredictionRecord(Base):
     observed_away_runs: Mapped[int | None] = mapped_column(Integer)
     observed_home_win: Mapped[bool | None] = mapped_column(Boolean)
     observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    minutes_before_first_pitch: Mapped[float] = mapped_column(Float)
+    timing_classification: Mapped[str] = mapped_column(String(30))
+    prediction_kind: Mapped[str] = mapped_column(String(20))
+    is_official: Mapped[bool | None] = mapped_column(Boolean)
+    source_retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    feature_cutoff_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    calibration_version: Mapped[str] = mapped_column(String(40))
+    distribution_version: Mapped[str] = mapped_column(String(40))
+    code_version: Mapped[str] = mapped_column(String(80))
+    run_probabilities_json: Mapped[str] = mapped_column(Text)
+    most_likely_scores_json: Mapped[str] = mapped_column(Text)
+    away_win_probability: Mapped[float] = mapped_column(Float)
+    regulation_tie_probability: Mapped[float] = mapped_column(Float)
+    completion_status: Mapped[str | None] = mapped_column(String(40))
+    settlement_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class LiveGameState(Base):
+    __tablename__ = "live_game_states"
+    game_pk: Mapped[int] = mapped_column(Integer, primary_key=True)
+    game_date: Mapped[date] = mapped_column(Date)
+    scheduled_start_time_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    home_team_id: Mapped[int] = mapped_column(Integer)
+    home_team_name: Mapped[str] = mapped_column(String(100))
+    away_team_id: Mapped[int] = mapped_column(Integer)
+    away_team_name: Mapped[str] = mapped_column(String(100))
+    venue_id: Mapped[int | None] = mapped_column(Integer)
+    venue_name: Mapped[str | None] = mapped_column(String(120))
+    home_starter_id: Mapped[int | None] = mapped_column(Integer)
+    away_starter_id: Mapped[int | None] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(50))
+    lineup_state: Mapped[str] = mapped_column(String(30))
+    home_lineup_json: Mapped[str] = mapped_column(Text, default="[]")
+    away_lineup_json: Mapped[str] = mapped_column(Text, default="[]")
+    source_retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    source: Mapped[str] = mapped_column(String(50))
+
+
+class OperationalState(Base):
+    __tablename__ = "operational_state"
+    key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    value: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

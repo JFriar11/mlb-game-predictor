@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from typing import Any
 
 import httpx
@@ -66,8 +67,8 @@ class MlbStatsClient:
         return payload
 
     def get_regular_season_schedule(self, season: int) -> dict[str, Any]:
-        if season not in range(2021, 2026):
-            raise ValueError("Historical ingestion is restricted to seasons 2021-2025")
+        if season not in range(2021, 2027):
+            raise ValueError("Ingestion is restricted to seasons 2021-2026")
         LOGGER.info("fetching regular-season schedule", extra={"season": season})
         return self._get_json(
             "/v1/schedule",
@@ -77,5 +78,17 @@ class MlbStatsClient:
                 "gameType": "R",
                 "startDate": f"{season}-03-01",
                 "endDate": f"{season}-11-30",
+            },
+        )
+
+    def get_schedule_for_date(self, game_date: date) -> dict[str, Any]:
+        """Return the MLB schedule as it exists at retrieval time."""
+        return self._get_json(
+            "/v1/schedule",
+            {
+                "sportId": 1,
+                "gameType": "R",
+                "date": game_date.isoformat(),
+                "hydrate": "team,venue,probablePitcher,linescore",
             },
         )

@@ -1,5 +1,7 @@
 # MLB Game Predictor
 
+Live CLI operation is documented in [docs/LIVE_OPERATIONS.md](docs/LIVE_OPERATIONS.md).
+
 A typed, PostgreSQL-backed foundation for a leakage-controlled MLB pregame forecasting
 system. Sprint 0 reconstructs exactly five completed games from the MLB Stats API.
 

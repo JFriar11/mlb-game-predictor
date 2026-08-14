@@ -1,11 +1,12 @@
 import argparse
 import json
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from sqlalchemy import func, select
 
 from mlb_predictor.config import get_settings
-from mlb_predictor.db.models import Game
+from mlb_predictor.db.models import Game, LivePredictionRecord
 from mlb_predictor.db.session import create_db_engine, session_scope
 from mlb_predictor.features.builder import build_2025_features, build_multiseason_features
 from mlb_predictor.features.environment_builder import build_environment_features
@@ -16,6 +17,21 @@ from mlb_predictor.ingestion.client import MlbStatsClient
 from mlb_predictor.ingestion.matchups import rebuild_matchup_aggregates
 from mlb_predictor.ingestion.season import ingest_season
 from mlb_predictor.ingestion.service import ingest_game
+from mlb_predictor.live import (
+    DiscoveredGame,
+    establish_launch_timestamp,
+    evaluate_prospective_ledger,
+    freeze_accepted_artifact,
+    get_launch_timestamp,
+    official_eligible,
+    parse_discovered_games,
+    persist_discovery,
+    predict_from_features,
+    save_prediction,
+    settle_prediction,
+    timing_classification,
+)
+from mlb_predictor.live_features import build_live_feature_pair
 from mlb_predictor.logging import configure_logging
 from mlb_predictor.modeling.calibration_evaluation import run_calibration_evaluation
 from mlb_predictor.modeling.distribution_evaluation import run_distribution_evaluation
@@ -35,6 +51,7 @@ from mlb_predictor.validation.season import audit_season
 
 MANIFEST_PATH = Path(__file__).parents[2] / "config" / "sprint0_games.json"
 PROJECT_ROOT = Path(__file__).parents[2]
+ACCEPTED_ARTIFACT = PROJECT_ROOT / "data" / "processed" / "accepted_model_v1.joblib"
 
 
 def _load_sprint0_ids() -> list[int]:
@@ -331,6 +348,169 @@ def _evaluate_calibration(output_dir: Path) -> int:
     return 0
 
 
+def _discover(
+    client: MlbStatsClient, requested: date, *, feeds: bool = True
+) -> list[DiscoveredGame]:
+    retrieved = datetime.now(UTC)
+    schedule = client.get_schedule_for_date(requested)
+    raw = parse_discovered_games(schedule, retrieved)
+    feed_map = {g.game_pk: client.get_game_feed(g.game_pk) for g in raw} if feeds else {}
+    return parse_discovered_games(schedule, retrieved, feed_map)
+
+
+def _predict_date(requested: date, dry_run: bool, game_pk: int | None = None) -> int:
+    settings, now = get_settings(), datetime.now(UTC)
+    if not ACCEPTED_ARTIFACT.exists():
+        raise FileNotFoundError(
+            "Freeze accepted artifact first: mlb-predictor freeze-accepted-model"
+        )
+    with MlbStatsClient(
+        settings.api_base_url, settings.http_timeout_seconds, settings.http_max_attempts
+    ) as client:
+        games = _discover(client, requested)
+    if game_pk is not None:
+        games = [g for g in games if g.game_pk == game_pk]
+    with session_scope(create_db_engine()) as session:
+        launch = get_launch_timestamp(session)
+        for game in games:
+            persist_discovery(session, game)
+            ready = official_eligible(game, now)
+            minutes, _ = timing_classification(now, game.scheduled_start_time_utc)
+            print(
+                f"{game.game_pk} {game.away_team_name} at {game.home_team_name} | "
+                f"{game.scheduled_start_time_utc.isoformat()} | {game.status} | "
+                f"starters={game.away_starter_id or 'TBD'}/{game.home_starter_id or 'TBD'} | "
+                f"lineup={game.lineup_state} | minutes={minutes:.1f} | eligible={ready}"
+            )
+            if game.lineup_state != "confirmed":
+                continue
+            away, home, warnings = build_live_feature_pair(
+                session,
+                game_pk=game.game_pk,
+                home_team_id=game.home_team_id,
+                away_team_id=game.away_team_id,
+                venue_id=game.venue_id or 0,
+                home_starter_id=game.home_starter_id or 0,
+                away_starter_id=game.away_starter_id or 0,
+                home_lineup=game.home_lineup,
+                away_lineup=game.away_lineup,
+                as_of=now,
+            )
+            if not game.home_starter_id or not game.away_starter_id:
+                warnings.append("missing_probable_starter")
+            result = predict_from_features(away, home, ACCEPTED_ARTIFACT)
+            print(
+                f"  Away {result['expected_away_runs']:.2f}, "
+                f"Home {result['expected_home_runs']:.2f}; "
+                f"home {result['calibrated_home_win_probability']:.1%}; "
+                f"tie {result['regulation_tie_probability']:.1%}"
+            )
+            if not dry_run:
+                save_prediction(
+                    session,
+                    game,
+                    result,
+                    now,
+                    official=ready,
+                    warnings=warnings + ([] if ready else ["diagnostic_not_official"]),
+                    cutoff=now,
+                    launch=launch,
+                )
+    return 0
+
+
+def _freeze_accepted() -> int:
+    with session_scope(create_db_engine()) as session:
+        result = freeze_accepted_artifact(
+            session,
+            ACCEPTED_ARTIFACT,
+            PROJECT_ROOT / "data/processed/sprint7",
+            PROJECT_ROOT / "data/processed/sprint8",
+        )
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+def _settle(game_date: date) -> int:
+    settings, now = get_settings(), datetime.now(UTC)
+    with MlbStatsClient(
+        settings.api_base_url, settings.http_timeout_seconds, settings.http_max_attempts
+    ) as client:
+        games = _discover(client, game_date, feeds=False)
+        feeds = {g.game_pk: client.get_game_feed(g.game_pk) for g in games if "Final" in g.status}
+    count = 0
+    with session_scope(create_db_engine()) as session:
+        for game in games:
+            row = session.scalar(
+                select(LivePredictionRecord).where(
+                    LivePredictionRecord.game_pk == game.game_pk,
+                    LivePredictionRecord.is_official.is_(True),
+                )
+            )
+            feed = feeds.get(game.game_pk)
+            if not row or not feed:
+                continue
+            linescore = feed.get("liveData", {}).get("linescore", {}).get("teams", {})
+            settle_prediction(
+                row,
+                int(linescore["home"]["runs"]),
+                int(linescore["away"]["runs"]),
+                game.status,
+                now,
+            )
+            count += 1
+    print(f"Settled {count} official predictions")
+    return 0
+
+
+def _inspect_prediction(game_pk: int) -> int:
+    with session_scope(create_db_engine()) as session:
+        rows = list(
+            session.scalars(
+                select(LivePredictionRecord)
+                .where(LivePredictionRecord.game_pk == game_pk)
+                .order_by(LivePredictionRecord.prediction_timestamp)
+            )
+        )
+        for row in rows:
+            print(
+                json.dumps(
+                    {c.name: getattr(row, c.name) for c in row.__table__.columns},
+                    default=str,
+                    indent=2,
+                )
+            )
+    return 0
+
+
+def _evaluate_live() -> int:
+    with session_scope(create_db_engine()) as session:
+        print(json.dumps(evaluate_prospective_ledger(session), indent=2))
+    return 0
+
+
+def _launch() -> int:
+    now = datetime.now(UTC)
+    with session_scope(create_db_engine()) as session:
+        timestamp = establish_launch_timestamp(session, now)
+    print(f"Prospective launch timestamp: {timestamp.isoformat()}")
+    return 0
+
+
+def _daily_live(requested: date, dry_run: bool) -> int:
+    result = _ingest_season(2026)
+    if result:
+        return result
+    return _predict_date(requested, dry_run)
+
+
+def _settle_live(requested: date) -> int:
+    result = _settle(requested)
+    if result:
+        return result
+    return _evaluate_live()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="MLB predictor data tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -340,11 +520,11 @@ def main() -> int:
     show = subparsers.add_parser("show-game", help="print a reconstructed game")
     show.add_argument("game_pk", type=int, nargs="?")
     season_ingest = subparsers.add_parser(
-        "ingest-season", help="ingest one regular season (2021-2025)"
+        "ingest-season", help="ingest regular-season history (2021-2026)"
     )
-    season_ingest.add_argument("--season", type=int, required=True, choices=range(2021, 2026))
+    season_ingest.add_argument("--season", type=int, required=True, choices=range(2021, 2027))
     season_audit = subparsers.add_parser("audit-season", help="audit the normalized season")
-    season_audit.add_argument("--season", type=int, required=True, choices=range(2021, 2026))
+    season_audit.add_argument("--season", type=int, required=True, choices=range(2021, 2027))
     season_audit.add_argument("--output", type=Path)
     raw_freeze = subparsers.add_parser("freeze-raw", help="checksum one season's raw layer")
     raw_freeze.add_argument("--season", type=int, required=True, choices=range(2021, 2026))
@@ -433,6 +613,26 @@ def main() -> int:
     calibration_evaluation.add_argument(
         "--output-dir", type=Path, default=Path("data/processed/sprint8")
     )
+    subparsers.add_parser(
+        "freeze-accepted-model", help="materialize the frozen accepted model artifact"
+    )
+    predict_date = subparsers.add_parser("predict-date", help="discover and predict eligible games")
+    predict_date.add_argument("--date", type=date.fromisoformat, required=True)
+    predict_date.add_argument("--dry-run", action="store_true")
+    predict_date.add_argument("--game-pk", type=int)
+    settle = subparsers.add_parser(
+        "settle-date", help="attach final outcomes without changing forecasts"
+    )
+    settle.add_argument("--date", type=date.fromisoformat, required=True)
+    inspect = subparsers.add_parser("inspect-prediction", help="show retained prediction snapshots")
+    inspect.add_argument("game_pk", type=int)
+    subparsers.add_parser("evaluate-live", help="score genuine settled prospective rows")
+    subparsers.add_parser("launch-prospective", help="establish the immutable launch boundary")
+    daily = subparsers.add_parser("daily-live", help="refresh state and check today's games")
+    daily.add_argument("--date", type=date.fromisoformat, default=date.today())
+    daily.add_argument("--dry-run", action="store_true")
+    settle_live = subparsers.add_parser("settle-live", help="settle a date and update ledger")
+    settle_live.add_argument("--date", type=date.fromisoformat, default=date.today())
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
@@ -481,4 +681,20 @@ def main() -> int:
         return _evaluate_distributions(args.output_dir)
     if args.command == "evaluate-calibration":
         return _evaluate_calibration(args.output_dir)
+    if args.command == "freeze-accepted-model":
+        return _freeze_accepted()
+    if args.command == "predict-date":
+        return _predict_date(args.date, args.dry_run, args.game_pk)
+    if args.command == "settle-date":
+        return _settle(args.date)
+    if args.command == "inspect-prediction":
+        return _inspect_prediction(args.game_pk)
+    if args.command == "evaluate-live":
+        return _evaluate_live()
+    if args.command == "launch-prospective":
+        return _launch()
+    if args.command == "daily-live":
+        return _daily_live(args.date, args.dry_run)
+    if args.command == "settle-live":
+        return _settle_live(args.date)
     return _show_game(args.game_pk)
