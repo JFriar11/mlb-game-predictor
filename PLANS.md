@@ -342,3 +342,38 @@ Stop for review. Do not begin FastAPI, React, Azure, dashboard, or live weather 
 ### Stop condition
 
 Stop before scheduling, application, cloud, dashboard, weather, or modeling work.
+
+## Completed plan: Sprint 10A — Automated live prediction operations
+
+**Status:** Completed 2026-08-13. Awaiting hosting approval and review.
+
+- Added incremental polling, primary/late timing classes, artifact checksum enforcement,
+  per-game failure isolation, watcher heartbeat/events, and actual-start settlement fields.
+- Added `poll-live`, `watch-live`, `watcher-status`, and `today-predictions` commands.
+- Expanded the prospective ledger with unsettled counts, timing classes, calibration buckets,
+  and separate primary/late settled summaries.
+- Dry-run found 14 early-diagnostic August 14 games and recorded no predictions.
+- Recommended Azure Container Apps scheduled Jobs, but created no cloud resources.
+
+### Stop condition
+
+Stop for review and infrastructure approval. Do not deploy or begin application/model work.
+
+## Completed plan: Sprint 10A.5 — Hosting and cost decision
+
+**Status:** Completed 2026-08-13. Awaiting architecture approval; no resources provisioned.
+
+- Measured the actual watcher/database/cache footprint and modeled 100–120 short polling
+  executions per active day.
+- Compared Azure Jobs with Azure and external PostgreSQL, GitHub Actions, Azure Functions,
+  and local operation.
+- Identified Azure Container Apps Jobs + slim Neon as cheapest acceptable ($0 expected) and
+  Container Apps Jobs + Azure PostgreSQL B1ms as best overall/easiest ($16–18/month).
+- Recommended the all-Azure architecture for the prospective ledger unless near-zero cost is
+  the controlling requirement; documented every resource, secret, deployment step, and risk.
+- Kept the 1.7-GiB raw cache outside the hosted prediction path.
+
+### Stop condition
+
+Stop for architecture approval. Do not provision, deploy, commit, push, or begin application
+work.

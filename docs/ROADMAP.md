@@ -166,6 +166,20 @@ Automate:
 **Completed 2026-08-13; awaiting review.** Bootstrapped and audited 2026 state, persisted
 the launch boundary, and added repeat-safe daily and settlement commands.
 
+## Sprint 10A — Automated live prediction operations
+
+**Completed 2026-08-13; awaiting hosting approval.** Added restart-safe polling, timing
+classes, checksum enforcement, watcher health, prospective ledger separation, and operations
+commands. No cloud resources were created.
+
+## Sprint 10A.5 — Hosting and cost decision
+
+**Completed 2026-08-13; awaiting architecture approval.** Priced the measured watcher
+workload and selected Azure Container Apps scheduled Jobs with Azure PostgreSQL Flexible
+Server as the best overall/easiest operational architecture. A slim Neon database is the
+documented cheapest acceptable alternative. No resources were provisioned. See
+`docs/SPRINT10A_5_HOSTING_COST_DECISION.md`.
+
 ## Sprint 10 — Application and deployment
 
 Build:

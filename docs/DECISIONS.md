@@ -340,3 +340,45 @@ feature history only and never refit the accepted components.
 
 **Decision:** Persist `2026-08-14T00:25:28.171973+00:00` once. A qualifying game must start
 after it, and its official prediction must be recorded after it but before first pitch.
+
+## D036 — Primary and late prospective operations
+
+**Date:** 2026-08-13
+
+**Decision:** Primary is T-minus 20–40 and late is less than 20 minutes but pregame. Both
+require two full lineups and starters and count prospectively, but remain separate in reports.
+Early and post-start records never count.
+
+## D037 — Hosted watcher recommendation
+
+**Date:** 2026-08-13
+
+**Decision:** Recommend an Azure Container Apps scheduled Job with hosted PostgreSQL after
+explicit infrastructure approval. Keep local operation available; do not use GitHub Actions
+as the long-term live system of record.
+
+## D038 — Hosting cost decision
+
+**Date:** 2026-08-13
+
+**Decision:** Prefer Azure Container Apps scheduled Jobs with Azure PostgreSQL Flexible
+Server B1ms as the best overall and easiest-to-operate prospective host. Its expected
+post-credit cost is $16–18/month. If near-zero recurring cost is controlling, use the same
+job with a verified live-only Neon Free database and an explicit Launch upgrade path.
+
+**Reason:** The short job fits inside Azure's monthly compute grant; PostgreSQL availability,
+backup, and quota headroom determine reliability. The full 425-MiB development database is
+too close to external free-tier limits, while GitHub's scheduled workflows can be delayed or
+dropped. No resource is authorized until the user chooses between assurance and cost.
+
+## D039 — Raw cache stays off the live critical path
+
+**Date:** 2026-08-13
+
+**Decision:** Deploy normalized live feature state and frozen model artifacts, not the full
+1.7-GiB historical raw cache. Use ephemeral current-feed storage, with optional 2026 object
+archive for recovery.
+
+**Reason:** Live features require normalized prior history, not replay of every frozen feed.
+Keeping raw storage out of the prediction path reduces image size, cost, and failure modes
+without mutating the canonical local caches or hashes.

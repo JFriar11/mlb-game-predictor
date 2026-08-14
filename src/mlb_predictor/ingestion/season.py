@@ -4,8 +4,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, select
 
+from mlb_predictor.db.models import Game
 from mlb_predictor.db.session import session_scope
 from mlb_predictor.ingestion.cache import RawJsonCache
 from mlb_predictor.ingestion.client import MlbStatsClient
@@ -56,9 +57,12 @@ def ingest_season(
         refresh=season == 2026,
     )
     game_ids = discover_completed_game_ids(schedule, season)
+    with session_scope(engine) as session:
+        existing_ids = set(session.scalars(select(Game.game_pk).where(Game.season == season)))
+    pending_ids = [game_pk for game_pk in game_ids if game_pk not in existing_ids]
     exceptions: list[IngestionException] = []
     ingested = 0
-    for index, game_pk in enumerate(game_ids, start=1):
+    for index, game_pk in enumerate(pending_ids, start=1):
         try:
             payload = cache.game_feed(season, game_pk, lambda pk=game_pk: client.get_game_feed(pk))
             with session_scope(engine) as session:
@@ -67,9 +71,9 @@ def ingest_season(
         except Exception as error:
             LOGGER.exception("season game ingestion failed", extra={"game_pk": game_pk})
             exceptions.append(IngestionException(game_pk, type(error).__name__, str(error)))
-        if index % 100 == 0 or index == len(game_ids):
+        if index % 100 == 0 or index == len(pending_ids):
             LOGGER.info(
-                f"season ingestion progress {index}/{len(game_ids)}; "
+                f"season ingestion progress {index}/{len(pending_ids)}; "
                 f"ingested={ingested}; exceptions={len(exceptions)}"
             )
     exception_path.parent.mkdir(parents=True, exist_ok=True)

@@ -2,6 +2,7 @@ import copy
 from datetime import UTC, datetime, timedelta
 
 import numpy as np
+import pytest
 
 from mlb_predictor.live import (
     DiscoveredGame,
@@ -9,6 +10,7 @@ from mlb_predictor.live import (
     parse_discovered_games,
     prediction_kind,
     timing_classification,
+    verify_accepted_artifact,
 )
 from mlb_predictor.modeling.calibration import ProbabilityCalibrator
 
@@ -37,7 +39,10 @@ def _game(start: datetime, lineup_state: str = "confirmed") -> DiscoveredGame:
 def test_timing_and_prospective_classification() -> None:
     now = datetime(2026, 8, 14, tzinfo=UTC)
     launch = now - timedelta(hours=1)
-    assert timing_classification(now, now + timedelta(minutes=30))[1] == "target_window"
+    assert timing_classification(now, now + timedelta(minutes=30))[1] == "primary_prospective"
+    assert timing_classification(now, now + timedelta(minutes=10))[1] == "late_prospective"
+    assert timing_classification(now, now + timedelta(minutes=50))[1] == "early_diagnostic"
+    assert timing_classification(now, now - timedelta(minutes=1))[1] == "backfill_retrospective"
     assert official_eligible(_game(now + timedelta(minutes=30)), now)
     assert not official_eligible(_game(now + timedelta(minutes=30), "unavailable"), now)
     assert prediction_kind(now, now + timedelta(minutes=30), launch) == "prospective"
@@ -92,3 +97,10 @@ def test_frozen_calibrator_is_reproducible() -> None:
     target = np.array([0, 0, 1, 1])
     model = ProbabilityCalibrator("platt").fit(probability, target)
     assert np.array_equal(model.predict(probability), model.predict(probability))
+
+
+def test_artifact_checksum_enforced(tmp_path) -> None:
+    artifact = tmp_path / "model.joblib"
+    artifact.write_bytes(b"not the accepted model")
+    with pytest.raises(RuntimeError, match="checksum mismatch"):
+        verify_accepted_artifact(artifact)

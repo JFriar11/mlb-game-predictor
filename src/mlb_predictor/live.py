@@ -33,6 +33,7 @@ CALIBRATION_VERSION = "platt_v1"
 DISTRIBUTION_VERSION = "negative_binomial_global_v1"
 LAUNCH_KEY = "prospective_launch_timestamp"
 TARGET_MINUTES = 30.0
+ACCEPTED_ARTIFACT_SHA256 = "2d2f6bdd557bb9f4fa981fd88358774617fc246810f2efb2e4c79917ba9df945"
 
 
 @dataclass(frozen=True)
@@ -121,13 +122,13 @@ def persist_discovery(session: Session, game: DiscoveredGame) -> LiveGameState:
 def timing_classification(now: datetime, start: datetime) -> tuple[float, str]:
     minutes = (start - now).total_seconds() / 60
     if minutes <= 0:
-        label = "started_or_final"
+        label = "backfill_retrospective"
     elif 20 <= minutes <= 40:
-        label = "target_window"
+        label = "primary_prospective"
     elif minutes > 40:
-        label = "early"
+        label = "early_diagnostic"
     else:
-        label = "late"
+        label = "late_prospective"
     return minutes, label
 
 
@@ -156,7 +157,7 @@ def official_eligible(game: DiscoveredGame, now: datetime) -> bool:
         game.lineup_state == "confirmed"
         and game.home_starter_id is not None
         and game.away_starter_id is not None
-        and timing == "target_window"
+        and timing in {"primary_prospective", "late_prospective"}
         and minutes > 0
     )
 
@@ -176,6 +177,15 @@ def code_version() -> str:
 
 def artifact_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def verify_accepted_artifact(path: Path) -> None:
+    observed = artifact_hash(path)
+    if observed != ACCEPTED_ARTIFACT_SHA256:
+        raise RuntimeError(
+            f"accepted model checksum mismatch: expected {ACCEPTED_ARTIFACT_SHA256}, "
+            f"observed {observed}; official prediction refused"
+        )
 
 
 def freeze_accepted_artifact(
@@ -277,8 +287,10 @@ def save_prediction(
     warnings: list[str],
     cutoff: datetime,
     launch: datetime | None,
+    artifact_path: Path,
 ) -> LivePredictionRecord:
     if official:
+        verify_accepted_artifact(artifact_path)
         existing = session.scalar(
             select(LivePredictionRecord).where(
                 LivePredictionRecord.game_pk == game.game_pk,
@@ -327,12 +339,21 @@ def save_prediction(
 
 
 def settle_prediction(
-    row: LivePredictionRecord, home_runs: int, away_runs: int, status: str, now: datetime
+    row: LivePredictionRecord,
+    home_runs: int,
+    away_runs: int,
+    status: str,
+    now: datetime,
+    actual_start: datetime | None = None,
 ) -> None:
     row.observed_home_runs, row.observed_away_runs = home_runs, away_runs
     row.observed_home_win = home_runs > away_runs
     row.observed_at = row.settlement_timestamp = now
     row.completion_status = status
+    row.actual_start_time_utc = actual_start
+    row.minutes_before_actual_start = (
+        (actual_start - row.prediction_timestamp).total_seconds() / 60 if actual_start else None
+    )
 
 
 def prospective_rows(session: Session) -> list[LivePredictionRecord]:
@@ -341,7 +362,6 @@ def prospective_rows(session: Session) -> list[LivePredictionRecord]:
             select(LivePredictionRecord).where(
                 LivePredictionRecord.is_official.is_(True),
                 LivePredictionRecord.prediction_kind == "prospective",
-                LivePredictionRecord.observed_at.is_not(None),
             )
         )
     )
@@ -350,14 +370,34 @@ def prospective_rows(session: Session) -> list[LivePredictionRecord]:
 def evaluate_prospective_ledger(session: Session) -> dict[str, Any]:
     rows = prospective_rows(session)
     if not rows:
-        return {"prospective_games": 0, "status": "awaiting_genuine_live_predictions"}
+        return {
+            "total_eligible_predictions": 0,
+            "primary_prospective_count": 0,
+            "late_prospective_count": 0,
+            "settled_count": 0,
+            "unsettled_count": 0,
+            "status": "awaiting_genuine_live_predictions",
+        }
+    settled = [row for row in rows if row.observed_at is not None]
+    summary: dict[str, Any] = {
+        "total_eligible_predictions": len(rows),
+        "primary_prospective_count": sum(
+            r.timing_classification == "primary_prospective" for r in rows
+        ),
+        "late_prospective_count": sum(r.timing_classification == "late_prospective" for r in rows),
+        "settled_count": len(settled),
+        "unsettled_count": len(rows) - len(settled),
+    }
+    if not settled:
+        return summary
+    rows = settled
     actual = np.array([[r.observed_away_runs, r.observed_home_runs] for r in rows], dtype=int)
     means = np.array([[r.expected_away_runs, r.expected_home_runs] for r in rows])
     probability = np.array([r.calibrated_home_win_probability for r in rows])
     wins = np.array([r.observed_home_win for r in rows], dtype=int)
     error = means - actual
     result: dict[str, Any] = {
-        "prospective_games": len(rows),
+        **summary,
         "mae": float(np.abs(error).mean()),
         "rmse": float(np.sqrt(np.mean(error**2))),
         "poisson_deviance": float(mean_poisson_deviance(actual.ravel(), means.ravel())),
@@ -384,6 +424,45 @@ def evaluate_prospective_ledger(session: Session) -> dict[str, Any]:
             "nb_nll": float(np.mean(nll)),
             "rps": float(np.mean(rps)),
             "interval_coverage": {str(k): float(np.mean(v)) for k, v in covered.items()},
+            "calibration_buckets": calibration_buckets(rows),
         }
     )
+    result["by_timing_class"] = {
+        timing: evaluate_settled_subset([r for r in rows if r.timing_classification == timing])
+        for timing in ("primary_prospective", "late_prospective")
+    }
     return result
+
+
+def calibration_buckets(rows: list[LivePredictionRecord]) -> list[dict[str, Any]]:
+    output = []
+    for low in np.arange(0, 1, 0.1):
+        selected = [r for r in rows if low <= r.calibrated_home_win_probability < low + 0.1]
+        if selected:
+            output.append(
+                {
+                    "range": f"{low:.1f}-{low + 0.1:.1f}",
+                    "count": len(selected),
+                    "predicted": float(
+                        np.mean([r.calibrated_home_win_probability for r in selected])
+                    ),
+                    "observed": float(np.mean([r.observed_home_win for r in selected])),
+                }
+            )
+    return output
+
+
+def evaluate_settled_subset(rows: list[LivePredictionRecord]) -> dict[str, Any]:
+    if not rows:
+        return {"settled_count": 0}
+    actual = np.array([[r.observed_away_runs, r.observed_home_runs] for r in rows], dtype=int)
+    means = np.array([[r.expected_away_runs, r.expected_home_runs] for r in rows])
+    probability = np.array([r.calibrated_home_win_probability for r in rows])
+    wins = np.array([r.observed_home_win for r in rows], dtype=int)
+    return {
+        "settled_count": len(rows),
+        "mae": float(np.abs(means - actual).mean()),
+        "rmse": float(np.sqrt(np.mean((means - actual) ** 2))),
+        "brier_score": float(brier_score_loss(wins, probability)),
+        "log_loss": float(log_loss(wins, probability, labels=[0, 1])),
+    }

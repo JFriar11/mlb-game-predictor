@@ -431,6 +431,8 @@ class LivePredictionRecord(Base):
     regulation_tie_probability: Mapped[float] = mapped_column(Float)
     completion_status: Mapped[str | None] = mapped_column(String(40))
     settlement_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    actual_start_time_utc: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    minutes_before_actual_start: Mapped[float | None] = mapped_column(Float)
 
 
 class LiveGameState(Base):
@@ -459,3 +461,14 @@ class OperationalState(Base):
     key: Mapped[str] = mapped_column(String(80), primary_key=True)
     value: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class WatcherEvent(Base):
+    __tablename__ = "watcher_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    event_type: Mapped[str] = mapped_column(String(50))
+    severity: Mapped[str] = mapped_column(String(20))
+    game_pk: Mapped[int | None] = mapped_column(Integer)
+    message: Mapped[str] = mapped_column(Text)
+    details_json: Mapped[str] = mapped_column(Text, default="{}")

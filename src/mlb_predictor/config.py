@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     api_base_url: str = "https://statsapi.mlb.com/api"
     http_timeout_seconds: float = Field(default=15.0, gt=0)
     http_max_attempts: int = Field(default=3, ge=1, le=8)
+    notification_webhook_url: str | None = None
+    watcher_idle_seconds: int = Field(default=900, ge=60, le=3600)
+    watcher_approaching_seconds: int = Field(default=300, ge=60, le=900)
 
 
 @lru_cache

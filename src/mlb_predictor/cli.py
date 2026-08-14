@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -30,6 +31,7 @@ from mlb_predictor.live import (
     save_prediction,
     settle_prediction,
     timing_classification,
+    verify_accepted_artifact,
 )
 from mlb_predictor.live_features import build_live_feature_pair
 from mlb_predictor.logging import configure_logging
@@ -48,10 +50,12 @@ from mlb_predictor.validation.games import validate_games
 from mlb_predictor.validation.matchups import audit_matchups
 from mlb_predictor.validation.pitching import audit_pitching_features
 from mlb_predictor.validation.season import audit_season
+from mlb_predictor.watcher import run_watcher, update_status, watcher_status
 
 MANIFEST_PATH = Path(__file__).parents[2] / "config" / "sprint0_games.json"
 PROJECT_ROOT = Path(__file__).parents[2]
 ACCEPTED_ARTIFACT = PROJECT_ROOT / "data" / "processed" / "accepted_model_v1.joblib"
+LOGGER = logging.getLogger(__name__)
 
 
 def _load_sprint0_ids() -> list[int]:
@@ -373,49 +377,50 @@ def _predict_date(requested: date, dry_run: bool, game_pk: int | None = None) ->
     with session_scope(create_db_engine()) as session:
         launch = get_launch_timestamp(session)
         for game in games:
-            persist_discovery(session, game)
-            ready = official_eligible(game, now)
-            minutes, _ = timing_classification(now, game.scheduled_start_time_utc)
-            print(
-                f"{game.game_pk} {game.away_team_name} at {game.home_team_name} | "
-                f"{game.scheduled_start_time_utc.isoformat()} | {game.status} | "
-                f"starters={game.away_starter_id or 'TBD'}/{game.home_starter_id or 'TBD'} | "
-                f"lineup={game.lineup_state} | minutes={minutes:.1f} | eligible={ready}"
-            )
-            if game.lineup_state != "confirmed":
-                continue
-            away, home, warnings = build_live_feature_pair(
-                session,
-                game_pk=game.game_pk,
-                home_team_id=game.home_team_id,
-                away_team_id=game.away_team_id,
-                venue_id=game.venue_id or 0,
-                home_starter_id=game.home_starter_id or 0,
-                away_starter_id=game.away_starter_id or 0,
-                home_lineup=game.home_lineup,
-                away_lineup=game.away_lineup,
-                as_of=now,
-            )
-            if not game.home_starter_id or not game.away_starter_id:
-                warnings.append("missing_probable_starter")
-            result = predict_from_features(away, home, ACCEPTED_ARTIFACT)
-            print(
-                f"  Away {result['expected_away_runs']:.2f}, "
-                f"Home {result['expected_home_runs']:.2f}; "
-                f"home {result['calibrated_home_win_probability']:.1%}; "
-                f"tie {result['regulation_tie_probability']:.1%}"
-            )
-            if not dry_run:
-                save_prediction(
-                    session,
-                    game,
-                    result,
-                    now,
-                    official=ready,
-                    warnings=warnings + ([] if ready else ["diagnostic_not_official"]),
-                    cutoff=now,
-                    launch=launch,
-                )
+            try:
+                with session.begin_nested():
+                    persist_discovery(session, game)
+                    ready = official_eligible(game, now)
+                    minutes, timing = timing_classification(now, game.scheduled_start_time_utc)
+                    print(
+                        f"{game.game_pk} {game.away_team_name} at {game.home_team_name} | "
+                        f"{game.scheduled_start_time_utc.isoformat()} | {game.status} | "
+                        f"starters={game.away_starter_id or 'TBD'}/"
+                        f"{game.home_starter_id or 'TBD'} | "
+                        f"lineup={game.lineup_state} | minutes={minutes:.1f} | "
+                        f"class={timing} | eligible={ready}"
+                    )
+                    if game.lineup_state != "confirmed" or not (
+                        game.home_starter_id and game.away_starter_id
+                    ):
+                        continue
+                    away, home, warnings = build_live_feature_pair(
+                        session,
+                        game_pk=game.game_pk,
+                        home_team_id=game.home_team_id,
+                        away_team_id=game.away_team_id,
+                        venue_id=game.venue_id or 0,
+                        home_starter_id=game.home_starter_id,
+                        away_starter_id=game.away_starter_id,
+                        home_lineup=game.home_lineup,
+                        away_lineup=game.away_lineup,
+                        as_of=now,
+                    )
+                    result = predict_from_features(away, home, ACCEPTED_ARTIFACT)
+                    if not dry_run:
+                        save_prediction(
+                            session,
+                            game,
+                            result,
+                            now,
+                            official=ready,
+                            warnings=warnings + ([] if ready else ["diagnostic_not_official"]),
+                            cutoff=now,
+                            launch=launch,
+                            artifact_path=ACCEPTED_ARTIFACT,
+                        )
+            except Exception:
+                LOGGER.exception("game polling failed", extra={"game_pk": game.game_pk})
     return 0
 
 
@@ -502,6 +507,52 @@ def _daily_live(requested: date, dry_run: bool) -> int:
     if result:
         return result
     return _predict_date(requested, dry_run)
+
+
+def _poll_once(requested: date, dry_run: bool) -> int:
+    if not dry_run:
+        verify_accepted_artifact(ACCEPTED_ARTIFACT)
+    prediction_result = _daily_live(requested, dry_run)
+    if prediction_result:
+        return prediction_result
+    if not dry_run:
+        _settle(requested)
+    return _evaluate_live()
+
+
+def _status() -> int:
+    with session_scope(create_db_engine()) as session:
+        print(json.dumps(watcher_status(session), indent=2))
+    return 0
+
+
+def _watch(requested: date, max_cycles: int | None) -> int:
+    settings = get_settings()
+
+    def status(payload: dict[str, object]) -> None:
+        with session_scope(create_db_engine()) as session:
+            update_status(session, payload)
+
+    return run_watcher(
+        lambda: _poll_once(requested, False), status, settings, max_cycles=max_cycles
+    )
+
+
+def _today_predictions(requested: date) -> int:
+    with session_scope(create_db_engine()) as session:
+        rows = list(
+            session.scalars(
+                select(LivePredictionRecord)
+                .where(func.date(LivePredictionRecord.scheduled_start_time_utc) == requested)
+                .order_by(LivePredictionRecord.scheduled_start_time_utc)
+            )
+        )
+        for row in rows:
+            print(
+                f"{row.game_pk} {row.timing_classification} official={row.is_official} "
+                f"home_win={row.calibrated_home_win_probability:.1%}"
+            )
+    return 0
 
 
 def _settle_live(requested: date) -> int:
@@ -633,6 +684,15 @@ def main() -> int:
     daily.add_argument("--dry-run", action="store_true")
     settle_live = subparsers.add_parser("settle-live", help="settle a date and update ledger")
     settle_live.add_argument("--date", type=date.fromisoformat, default=date.today())
+    poll = subparsers.add_parser("poll-live", help="run one complete live operations cycle")
+    poll.add_argument("--date", type=date.fromisoformat, default=date.today())
+    poll.add_argument("--dry-run", action="store_true")
+    watch = subparsers.add_parser("watch-live", help="run the restart-safe polling watcher")
+    watch.add_argument("--date", type=date.fromisoformat, default=date.today())
+    watch.add_argument("--max-cycles", type=int)
+    subparsers.add_parser("watcher-status", help="show watcher heartbeat and last result")
+    today = subparsers.add_parser("today-predictions", help="show predictions for one date")
+    today.add_argument("--date", type=date.fromisoformat, default=date.today())
     args = parser.parse_args()
     configure_logging(get_settings().log_level)
     if args.command == "ingest-five":
@@ -697,4 +757,12 @@ def main() -> int:
         return _daily_live(args.date, args.dry_run)
     if args.command == "settle-live":
         return _settle_live(args.date)
+    if args.command == "poll-live":
+        return _poll_once(args.date, args.dry_run)
+    if args.command == "watch-live":
+        return _watch(args.date, args.max_cycles)
+    if args.command == "watcher-status":
+        return _status()
+    if args.command == "today-predictions":
+        return _today_predictions(args.date)
     return _show_game(args.game_pk)
