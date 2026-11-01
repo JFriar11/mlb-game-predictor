@@ -91,3 +91,22 @@ The project succeeds by demonstrating:
 - Maintainable engineering
 
 A complex model is not considered successful solely because it uses advanced algorithms.
+
+## Explanation and confidence semantics
+
+New predictions retain prediction-time input evidence for deterministic baseball
+summaries; older predictions without that evidence remain explicitly unexplained.
+Summaries show raw/stabilized inputs and sample sizes, not causal or ranked model
+contributions. Confidence presentation separates calibrated outcome probability,
+recorded input-quality limitations, and retrospective calibration evidence. It
+does not assign an unvalidated combined confidence grade. Uncensored 80%/95% count
+ranges are derived from saved distribution parameters alongside the explicitly
+censored 12+ score representation. See `EXPLANATIONS.md` for limits.
+
+## Optional local what-if mode
+
+User-approved offseason scope adds a lineup sandbox over the frozen accepted model.
+Custom teams, nine hitters per side, pitchers, park and history cutoff generate
+an explicitly hypothetical, unsaved result. The confirmed-lineup prospective
+product remains separate. No custom lineup enters model evaluation or the official
+ledger. Local operation is the selected hosting approach for now. See `SANDBOX.md`.

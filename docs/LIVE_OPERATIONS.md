@@ -1,5 +1,7 @@
 # Live Operations
 
+Current release/hosting gates and updated cost assumptions: [release runbook](RELEASE.md) and [November review](HOSTING_REVIEW_2026_11.md). Historical estimates below are not a current complete-system quote.
+
 One-time preparation uses `ingest-season --season 2026`, `audit-season --season 2026`,
 then `launch-prospective`. Do not rerun `freeze-accepted-model`; it is frozen.
 

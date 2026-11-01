@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
@@ -15,7 +16,14 @@ from sklearn.metrics import brier_score_loss, log_loss, mean_poisson_deviance
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from mlb_predictor.db.models import Game, LiveGameState, LivePredictionRecord, OperationalState
+from mlb_predictor.db.models import (
+    Game,
+    LiveGameState,
+    LivePredictionRecord,
+    OperationalState,
+    PredictionInputSnapshot,
+)
+from mlb_predictor.explanations import SNAPSHOT_SOURCE, capture_feature_evidence
 from mlb_predictor.modeling.calibration import ProbabilityCalibrator
 from mlb_predictor.modeling.dataset import MULTISEASON_FEATURE_COLUMNS
 from mlb_predictor.modeling.distributions import (
@@ -163,6 +171,11 @@ def official_eligible(game: DiscoveredGame, now: datetime) -> bool:
 
 
 def code_version() -> str:
+    supplied = os.environ.get("MLB_CODE_VERSION")
+    if supplied:
+        if len(supplied) > 80 or any(char.isspace() for char in supplied):
+            raise ValueError("MLB_CODE_VERSION must be a revision of at most 80 characters")
+        return supplied
     try:
         value = subprocess.run(
             ["git", "rev-parse", "HEAD"], check=True, capture_output=True, text=True
@@ -288,6 +301,7 @@ def save_prediction(
     cutoff: datetime,
     launch: datetime | None,
     artifact_path: Path,
+    feature_pair: tuple[dict[str, Any], dict[str, Any]] | None = None,
 ) -> LivePredictionRecord:
     if official:
         verify_accepted_artifact(artifact_path)
@@ -300,6 +314,23 @@ def save_prediction(
         )
         if existing:
             return existing
+    evidence = None
+    if feature_pair is not None:
+        if cutoff > now:
+            raise ValueError("input snapshot cutoff cannot follow prediction time")
+        evidence = capture_feature_evidence(
+            feature_pair[0],
+            feature_pair[1],
+            as_of=cutoff,
+            game_pk=game.game_pk,
+            artifact_sha256=artifact_hash(artifact_path),
+            home_lineup=game.home_lineup,
+            away_lineup=game.away_lineup,
+            home_team_id=game.home_team_id,
+            away_team_id=game.away_team_id,
+            home_starter_id=game.home_starter_id,
+            away_starter_id=game.away_starter_id,
+        )
     minutes, timing = timing_classification(now, game.scheduled_start_time_utc)
     row = LivePredictionRecord(
         game_pk=game.game_pk,
@@ -335,6 +366,17 @@ def save_prediction(
     )
     session.add(row)
     session.flush()
+    if evidence is not None:
+        session.add(
+            PredictionInputSnapshot(
+                prediction_id=row.id,
+                snapshot_version=evidence.snapshot_version,
+                as_of=cutoff,
+                source=SNAPSHOT_SOURCE,
+                payload_json=evidence.model_dump_json(),
+            )
+        )
+        session.flush()
     return row
 
 

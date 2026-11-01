@@ -382,3 +382,108 @@ archive for recovery.
 **Reason:** Live features require normalized prior history, not replay of every frozen feed.
 Keeping raw storage out of the prediction path reduces image size, cost, and failure modes
 without mutating the canonical local caches or hashes.
+
+## D040 — Frozen artifact runtime and isolated acceptance
+
+**Date:** 2026-11-01
+
+**Decision:** Support the frozen artifact on Python 3.12 with exact runtime/build
+dependency pins and a digest-pinned non-root Docker image. Keep Python 3.11+ source
+compatibility separate from artifact compatibility. Supply the trusted artifact
+read-only at runtime using `MLB_ARTIFACT_PATH`; never refit it during setup.
+
+**Reason:** Serialized scientific models need their recorded dependency versions.
+An installed wheel must resolve resources independently of the source tree. Empty
+PostgreSQL migration, prediction/settlement persistence, backup/restore, and
+cross-platform inference acceptance use disposable synthetic state, protecting
+the historical database and prospective ledger. No cloud deployment is authorized.
+
+## D041 — Read-only accepted-model API
+
+**Date:** 2026-11-01
+
+**Decision:** Serve saved official accepted-model forecasts through versioned GET
+routes. Use PostgreSQL-enforced read-only transactions, typed validated responses,
+and safe 404/422/503 errors. No HTTP write, inference, ingestion, fitting, or
+settlement routes are introduced. Stored data remains readable without the model
+binary; readiness separately verifies required schema and artifact checksum.
+
+**Reason:** The API should expose the ledger without changing its scientific or
+operational meaning. Separate mutable discovery from saved provenance/outcomes;
+label censored 12+ categories explicitly. Prefer MLB official date, with a disclosed
+UTC saved-start fallback when discovery is absent. Malformed selected records fail
+the request rather than silently disappearing from a date's results. Hosting and
+public access remain outside this milestone.
+
+## D042 — Retained inputs and qualified uncertainty presentation
+
+**Date:** 2026-11-01
+
+**Decision:** Preserve prediction-time input evidence in a new optional table and
+expose deterministic baseball input summaries, not causal/ranked attribution.
+Capture raw and accepted stabilized values with lineup and cutoff provenance.
+Never reconstruct old missing evidence or overwrite it on official reruns.
+
+**Reason:** The existing forecast ledger lacks the inputs needed to substantiate
+historical explanations. New evidence must be contemporaneous, not assembled from
+postgame outcomes or mutable discovery. A missing snapshot is explicitly unavailable.
+
+**Decision:** Keep calibrated win probabilities separate from input-quality flags
+and retrospective calibration evidence; do not invent a composite confidence grade.
+Derive uncensored 80%/95% marginal count ranges from saved NB parameters while
+preserving all original censored-bin outputs and their limitations. No refitting,
+new model promotion, or prospective performance claim is introduced.
+
+## D043 — Local dashboard and honest demonstration boundary
+
+**Date:** 2026-11-01
+
+**Decision:** Add a repository-local React/TypeScript/Vite client with same-origin
+relative GETs through a configurable server-side proxy. Validate rendered fields
+at runtime, retain date/game/source in the URL, cancel superseded requests, and
+label retained same-query data when a refresh fails. Do not expose credentials,
+add API write routes, or deploy through Sites/cloud during this milestone.
+
+**Reason:** The existing FastAPI/PostgreSQL boundary remains the system of record;
+a static UI needs no server-rendering platform or new infrastructure before the
+hosting decision. Local Vite proxying avoids broad CORS changes.
+
+**Decision:** Keep the actual empty ledger empty. An explicitly selected demo
+uses labeled synthetic, contract-validated fixtures without API/ledger writes or
+fitted-model inference. Never fall back to fake forecasts on API failure. Keep
+settlement, censored score categories, uncensored ranges, raw/stabilized inputs,
+input-quality flags, and retrospective calibration evidence distinct in the UI.
+
+## D044 — Explicit private release packaging and gated hosting
+
+**Date:** 2026-11-01
+
+Preserve the approved UI and serve its compiled assets from the read-only API.
+The explicit release target embeds only the checksum-verified frozen artifact
+through a BuildKit secret; the default runtime remains artifact-free. Record the
+source revision and build-input hash, distinguishing a local image ID from a
+registry digest. This explicitly extends the earlier runtime artifact exclusion
+for the private release target only. No credential is baked into an image.
+
+Prepare private ingress and a manual status job, with separate database secrets.
+A 784.4-MiB feature replay motivates 2-GiB worker headroom; full polling and transfer
+capacity remain unmeasured. Rehearse normalized-state recovery without changing
+the source or inserting prospective predictions. Do not activate polling or cloud
+resources before hosting/cost/access decisions. Earlier hosting estimates are
+historical; see `HOSTING_REVIEW_2026_11.md` and `RELEASE.md`.
+
+## D045 — Local operation and explicit offseason lineup sandbox
+
+**Date:** 2026-11-01
+
+The user selected local operation instead of cloud deployment and requested
+predictions from entered lineups. Add opt-in, read-only-database hypothetical
+inference using the frozen artifact. Require known teams/players/park, two distinct
+teams and starters, nine unique hitters per side, no opposing-player conflicts,
+and an aware 2026-or-later nonfuture cutoff. Allow hypothetical roster combinations
+and own-team two-way players. Retained prior-date initial lineups are editable
+conveniences. Default to the day after retained history, disclose stale dates and
+order-invariant hitter aggregation, and never save/score a scenario as prospective.
+No ingestion, training, scheduling or cloud services are introduced. This supersedes
+cloud deployment as the immediate next action; prepared infrastructure is retained.
+See `SANDBOX.md` for interfaces and scientific limits.

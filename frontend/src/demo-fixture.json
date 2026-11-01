@@ -1,0 +1,1074 @@
+{
+  "notice": "Synthetic demonstration only. Stipulated means/probabilities; no fitted model inference, genuine MLB prediction, or real ledger record.",
+  "slate": {
+    "date": "2026-08-14",
+    "model_version": "accepted_v1_2026_prospective",
+    "generated_at": "2026-08-14T17:50:00Z",
+    "count": 2,
+    "predictions": [
+      {
+        "record_id": 1,
+        "game_pk": 8000001,
+        "game_date": "2026-08-14",
+        "date_basis": "mlb_official_date",
+        "latest_discovery": {
+          "game_date": "2026-08-14",
+          "scheduled_start_time_utc": "2026-08-14T18:20:00Z",
+          "home_team_id": 112,
+          "home_team_name": "Chicago Cubs",
+          "away_team_id": 138,
+          "away_team_name": "St. Louis Cardinals",
+          "venue_id": 17,
+          "venue_name": "Wrigley Field",
+          "status": "Scheduled",
+          "lineup_state": "confirmed",
+          "source": "MLB Stats API",
+          "source_retrieved_at": "2026-08-14T17:49:30Z"
+        },
+        "home": {
+          "expected_runs": 4.8,
+          "run_distribution": {
+            "probabilities": [
+              0.03939610842131783, 0.0898770534326642, 0.1261012650823313, 0.14000596731574416,
+              0.13494871754578386, 0.11822123392604027, 0.09664473495855007, 0.07496397692602368,
+              0.055795431495319806, 0.040167053345173225, 0.028132209985478693,
+              0.019253984020479734, 0.03649226354509305
+            ],
+            "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12+"],
+            "terminal_bucket_lower_bound": 12,
+            "terminal_bucket_is_censored": true
+          },
+          "intervals": {
+            "50": {
+              "lower": 2,
+              "upper": 7,
+              "upper_is_censored": false
+            },
+            "80": {
+              "lower": 1,
+              "upper": 9,
+              "upper_is_censored": false
+            },
+            "95": {
+              "lower": 0,
+              "upper": 12,
+              "upper_is_censored": true
+            }
+          }
+        },
+        "away": {
+          "expected_runs": 4.0,
+          "run_distribution": {
+            "probabilities": [
+              0.058648313416847404, 0.12218398628509868, 0.1565482324277828, 0.15872251343372407,
+              0.13970887901197596, 0.11176710320958089, 0.08343724718770786, 0.05910138342462636,
+              0.04017047154642578, 0.026408365553668756, 0.016890350468700632, 0.010556469042937885,
+              0.015856684990922965
+            ],
+            "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12+"],
+            "terminal_bucket_lower_bound": 12,
+            "terminal_bucket_is_censored": true
+          },
+          "intervals": {
+            "50": {
+              "lower": 2,
+              "upper": 6,
+              "upper_is_censored": false
+            },
+            "80": {
+              "lower": 1,
+              "upper": 8,
+              "upper_is_censored": false
+            },
+            "95": {
+              "lower": 0,
+              "upper": 11,
+              "upper_is_censored": false
+            }
+          }
+        },
+        "raw_home_win_probability": 0.5727624921697564,
+        "calibrated_home_win_probability": 0.565,
+        "away_win_probability": 0.435,
+        "regulation_tie_probability": 0.1043752437726239,
+        "extra_inning_home_win_probability": 0.5,
+        "distribution_name": "negative_binomial",
+        "dispersion": 0.23,
+        "most_likely_score_bins": [
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "3",
+            "probability": 0.022222099028074736
+          },
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "2",
+            "probability": 0.02191768671262168
+          },
+          {
+            "home_run_bucket": "4",
+            "away_run_bucket": "3",
+            "probability": 0.021419399633524513
+          },
+          {
+            "home_run_bucket": "4",
+            "away_run_bucket": "2",
+            "probability": 0.021125983200188582
+          },
+          {
+            "home_run_bucket": "2",
+            "away_run_bucket": "3",
+            "probability": 0.02001510974103993
+          }
+        ],
+        "data_quality_warnings": ["synthetic_demo"],
+        "provenance": {
+          "prediction_timestamp": "2026-08-14T17:50:00Z",
+          "scheduled_start_time_utc": "2026-08-14T18:20:00Z",
+          "feature_cutoff_timestamp": "2026-08-14T17:50:00Z",
+          "source_retrieved_at": "2026-08-14T17:49:30Z",
+          "model_version": "accepted_v1_2026_prospective",
+          "feature_version": "sprint3_5_v1",
+          "calibration_version": "platt_v1",
+          "distribution_version": "negative_binomial_global_v1",
+          "code_version": "synthetic-demo",
+          "lineup_confirmation_state": "confirmed",
+          "home_starter_id": 900001,
+          "away_starter_id": 900011,
+          "timing_classification": "synthetic_example",
+          "prediction_kind": "synthetic_demo",
+          "minutes_before_scheduled_start": 30.0,
+          "is_official": true
+        },
+        "observed_outcome": null,
+        "explanation": {
+          "status": "available",
+          "method": "pregame_input_summary_v1",
+          "as_of": "2026-08-14T17:50:00Z",
+          "snapshot_version": "pregame_inputs_v1",
+          "home_lineup": [910001, 910002, 910003, 910004, 910005, 910006, 910007, 910008, 910009],
+          "away_lineup": [920001, 920002, 920003, 920004, 920005, 920006, 920007, 920008, 920009],
+          "home_team_id": 112,
+          "away_team_id": 138,
+          "factors": [
+            {
+              "offense_side": "home",
+              "feature": "lineup_on_base_rate",
+              "label": "Lineup on-base proxy",
+              "raw_value": 0.344,
+              "model_value": 0.3405714285714285,
+              "unit": "rate",
+              "sample_size": 1200,
+              "sample_unit": "plate appearances",
+              "note": "(Hits + walks) / (at-bats + walks) across retained prior MLB history; not official OBP. Excludes hit-by-pitch and sacrifice flies. Empty history uses a prior."
+            },
+            {
+              "offense_side": "home",
+              "feature": "starter_era",
+              "label": "Opposing starter ERA",
+              "raw_value": 4.35,
+              "model_value": 4.394117647058823,
+              "unit": "earned runs per nine innings",
+              "sample_size": 12,
+              "sample_unit": "starts",
+              "note": "Opposing starting pitcher's retained prior MLB starts. Empty history uses a prior; the mean model receives the stabilized value, not an assumed current-game outcome."
+            },
+            {
+              "offense_side": "home",
+              "feature": "bullpen_era_30d",
+              "label": "Opposing bullpen ERA",
+              "raw_value": 4.1,
+              "model_value": 4.181818181818182,
+              "unit": "earned runs per nine innings",
+              "sample_size": 210,
+              "sample_unit": "outs",
+              "note": "Opposing team's reliever results from earlier dates within 30 days. This is team history, not a confirmed available-reliever projection. Empty history uses a prior."
+            },
+            {
+              "offense_side": "home",
+              "feature": "team_runs_avg_10",
+              "label": "Recent team scoring",
+              "raw_value": 4.9,
+              "model_value": 4.9,
+              "unit": "runs per game",
+              "sample_size": null,
+              "sample_unit": null,
+              "note": "Average over up to ten retained team games. Early-season or empty-history fallbacks can use earlier history or a league prior; the exact window count was not retained."
+            },
+            {
+              "offense_side": "away",
+              "feature": "lineup_on_base_rate",
+              "label": "Lineup on-base proxy",
+              "raw_value": 0.318,
+              "model_value": 0.3183125,
+              "unit": "rate",
+              "sample_size": 1080,
+              "sample_unit": "plate appearances",
+              "note": "(Hits + walks) / (at-bats + walks) across retained prior MLB history; not official OBP. Excludes hit-by-pitch and sacrifice flies. Empty history uses a prior."
+            },
+            {
+              "offense_side": "away",
+              "feature": "starter_era",
+              "label": "Opposing starter ERA",
+              "raw_value": 3.6,
+              "model_value": 3.825,
+              "unit": "earned runs per nine innings",
+              "sample_size": 15,
+              "sample_unit": "starts",
+              "note": "Opposing starting pitcher's retained prior MLB starts. Empty history uses a prior; the mean model receives the stabilized value, not an assumed current-game outcome."
+            },
+            {
+              "offense_side": "away",
+              "feature": "bullpen_era_30d",
+              "label": "Opposing bullpen ERA",
+              "raw_value": 3.85,
+              "model_value": 3.975806451612903,
+              "unit": "earned runs per nine innings",
+              "sample_size": 225,
+              "sample_unit": "outs",
+              "note": "Opposing team's reliever results from earlier dates within 30 days. This is team history, not a confirmed available-reliever projection. Empty history uses a prior."
+            },
+            {
+              "offense_side": "away",
+              "feature": "team_runs_avg_10",
+              "label": "Recent team scoring",
+              "raw_value": 4.2,
+              "model_value": 4.2,
+              "unit": "runs per game",
+              "sample_size": null,
+              "sample_unit": null,
+              "note": "Average over up to ten retained team games. Early-season or empty-history fallbacks can use earlier history or a league prior; the exact window count was not retained."
+            }
+          ],
+          "note": "Recorded pregame inputs in a fixed order. These are not ranked contributions, causal effects, or estimates of runs added; raw and stabilized model values are shown."
+        },
+        "confidence": {
+          "favorite": "home",
+          "favorite_win_probability": 0.565,
+          "probability_margin_over_even": 0.06499999999999995,
+          "input_quality": {
+            "status": "limited",
+            "fallback_counts": {
+              "home": 2,
+              "away": 1
+            },
+            "recorded_warnings": ["synthetic_demo"],
+            "note": "Missing evidence is unknown quality. Fallbacks or recorded warnings flag limited inputs. No recorded limitations does not certify complete or current data."
+          },
+          "calibration": {
+            "scope": "retrospective_development",
+            "evaluation_seasons": [2022, 2023, 2024, 2025],
+            "evaluated_games": 5928,
+            "brier_score": 0.24485,
+            "log_loss": 0.68266,
+            "expected_calibration_error": 0.01717,
+            "local_reliability": "not_estimated",
+            "source_report": "docs/SPRINT8_FINAL_RETROSPECTIVE_AUDIT.md",
+            "note": "Rounded aggregate chronological development results, not a game-specific reliability estimate or prospective validation. Only four evaluated home probabilities exceeded 0.8."
+          },
+          "note": "Win probability describes the outcome forecast, not confidence that the model is correct. Input quality and calibration evidence are reported separately; no composite score is used."
+        },
+        "run_ranges": {
+          "method": "saved_count_distribution_equal_tailed_v1",
+          "home": {
+            "80": {
+              "lower": 1,
+              "upper": 9,
+              "nominal_mass": 0.8,
+              "model_mass": 0.8767254340276301
+            },
+            "95": {
+              "lower": 0,
+              "upper": 12,
+              "nominal_mass": 0.95,
+              "model_mass": 0.9764291363773957
+            }
+          },
+          "away": {
+            "80": {
+              "lower": 1,
+              "upper": 8,
+              "nominal_mass": 0.8,
+              "model_mass": 0.8716398165269221
+            },
+            "95": {
+              "lower": 0,
+              "upper": 11,
+              "nominal_mass": 0.95,
+              "model_mass": 0.9841433150090767
+            }
+          },
+          "note": "Uncensored marginal count quantiles from the saved means/dispersion. Nominal and model mass are not measured real-world coverage. Saved 12+ bin intervals remain separate."
+        }
+      },
+      {
+        "record_id": 2,
+        "game_pk": 8000002,
+        "game_date": "2026-08-14",
+        "date_basis": "mlb_official_date",
+        "latest_discovery": {
+          "game_date": "2026-08-14",
+          "scheduled_start_time_utc": "2026-08-14T23:20:00Z",
+          "home_team_id": 111,
+          "home_team_name": "Boston Red Sox",
+          "away_team_id": 147,
+          "away_team_name": "New York Yankees",
+          "venue_id": 3,
+          "venue_name": "Fenway Park",
+          "status": "Scheduled",
+          "lineup_state": "confirmed",
+          "source": "MLB Stats API",
+          "source_retrieved_at": "2026-08-14T17:49:30Z"
+        },
+        "home": {
+          "expected_runs": 4.2,
+          "run_distribution": {
+            "probabilities": [
+              0.052911483881809954, 0.11303572345045867, 0.1485103121426933, 0.15440237946066374,
+              0.1393626766800345, 0.11432559763456751, 0.0875178150763094, 0.06356838246641398,
+              0.04430548121800796, 0.029867513279552355, 0.01958859187317127, 0.012554234872937838,
+              0.020049807963379518
+            ],
+            "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12+"],
+            "terminal_bucket_lower_bound": 12,
+            "terminal_bucket_is_censored": true
+          },
+          "intervals": {
+            "50": {
+              "lower": 2,
+              "upper": 6,
+              "upper_is_censored": false
+            },
+            "80": {
+              "lower": 1,
+              "upper": 8,
+              "upper_is_censored": false
+            },
+            "95": {
+              "lower": 0,
+              "upper": 11,
+              "upper_is_censored": false
+            }
+          }
+        },
+        "away": {
+          "expected_runs": 4.7,
+          "run_distribution": {
+            "probabilities": [
+              0.04132457034832223, 0.09333276340082378, 0.12963880471411882, 0.14249262821532657,
+              0.1359705605375227, 0.11792391526099029, 0.09543658206890193, 0.07328575595680227,
+              0.05400026239320593, 0.03848553059023508, 0.026684657418861137, 0.01808042621844988,
+              0.03334354287643937
+            ],
+            "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12+"],
+            "terminal_bucket_lower_bound": 12,
+            "terminal_bucket_is_censored": true
+          },
+          "intervals": {
+            "50": {
+              "lower": 2,
+              "upper": 6,
+              "upper_is_censored": false
+            },
+            "80": {
+              "lower": 1,
+              "upper": 9,
+              "upper_is_censored": false
+            },
+            "95": {
+              "lower": 0,
+              "upper": 12,
+              "upper_is_censored": true
+            }
+          }
+        },
+        "raw_home_win_probability": 0.45478355226946304,
+        "calibrated_home_win_probability": 0.46,
+        "away_win_probability": 0.54,
+        "regulation_tie_probability": 0.10439258955483646,
+        "extra_inning_home_win_probability": 0.5,
+        "distribution_name": "negative_binomial",
+        "dispersion": 0.23,
+        "most_likely_score_bins": [
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "3",
+            "probability": 0.022001200852050134
+          },
+          {
+            "home_run_bucket": "2",
+            "away_run_bucket": "3",
+            "probability": 0.021161624694290896
+          },
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "4",
+            "probability": 0.02099417808359373
+          },
+          {
+            "home_run_bucket": "2",
+            "away_run_bucket": "4",
+            "probability": 0.020193030387644473
+          },
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "2",
+            "probability": 0.020016539918296255
+          }
+        ],
+        "data_quality_warnings": ["synthetic_demo"],
+        "provenance": {
+          "prediction_timestamp": "2026-08-14T17:50:00Z",
+          "scheduled_start_time_utc": "2026-08-14T23:20:00Z",
+          "feature_cutoff_timestamp": "2026-08-14T17:50:00Z",
+          "source_retrieved_at": "2026-08-14T17:49:30Z",
+          "model_version": "accepted_v1_2026_prospective",
+          "feature_version": "sprint3_5_v1",
+          "calibration_version": "platt_v1",
+          "distribution_version": "negative_binomial_global_v1",
+          "code_version": "synthetic-demo",
+          "lineup_confirmation_state": "confirmed",
+          "home_starter_id": 900002,
+          "away_starter_id": 900012,
+          "timing_classification": "synthetic_example",
+          "prediction_kind": "synthetic_demo",
+          "minutes_before_scheduled_start": 330.0,
+          "is_official": true
+        },
+        "observed_outcome": null,
+        "explanation": {
+          "status": "not_retained",
+          "method": "pregame_input_summary_v1",
+          "as_of": null,
+          "snapshot_version": null,
+          "home_lineup": null,
+          "away_lineup": null,
+          "home_team_id": null,
+          "away_team_id": null,
+          "factors": [],
+          "note": "Prediction-time inputs were not retained. No historical explanation is reconstructed."
+        },
+        "confidence": {
+          "favorite": "away",
+          "favorite_win_probability": 0.54,
+          "probability_margin_over_even": 0.03999999999999998,
+          "input_quality": {
+            "status": "unknown",
+            "fallback_counts": null,
+            "recorded_warnings": ["synthetic_demo"],
+            "note": "Missing evidence is unknown quality. Fallbacks or recorded warnings flag limited inputs. No recorded limitations does not certify complete or current data."
+          },
+          "calibration": {
+            "scope": "retrospective_development",
+            "evaluation_seasons": [2022, 2023, 2024, 2025],
+            "evaluated_games": 5928,
+            "brier_score": 0.24485,
+            "log_loss": 0.68266,
+            "expected_calibration_error": 0.01717,
+            "local_reliability": "not_estimated",
+            "source_report": "docs/SPRINT8_FINAL_RETROSPECTIVE_AUDIT.md",
+            "note": "Rounded aggregate chronological development results, not a game-specific reliability estimate or prospective validation. Only four evaluated home probabilities exceeded 0.8."
+          },
+          "note": "Win probability describes the outcome forecast, not confidence that the model is correct. Input quality and calibration evidence are reported separately; no composite score is used."
+        },
+        "run_ranges": {
+          "method": "saved_count_distribution_equal_tailed_v1",
+          "home": {
+            "80": {
+              "lower": 1,
+              "upper": 8,
+              "nominal_mass": 0.8,
+              "model_mass": 0.8650283681291487
+            },
+            "95": {
+              "lower": 0,
+              "upper": 11,
+              "nominal_mass": 0.95,
+              "model_mass": 0.9799501920366199
+            }
+          },
+          "away": {
+            "80": {
+              "lower": 1,
+              "upper": 9,
+              "nominal_mass": 0.8,
+              "model_mass": 0.8805668031379266
+            },
+            "95": {
+              "lower": 0,
+              "upper": 12,
+              "nominal_mass": 0.95,
+              "model_mass": 0.9786688050088035
+            }
+          },
+          "note": "Uncensored marginal count quantiles from the saved means/dispersion. Nominal and model mass are not measured real-world coverage. Saved 12+ bin intervals remain separate."
+        }
+      }
+    ]
+  },
+  "details": {
+    "8000001": {
+      "game_pk": 8000001,
+      "model_version": "accepted_v1_2026_prospective",
+      "prediction_status": "available",
+      "latest_discovery": {
+        "game_date": "2026-08-14",
+        "scheduled_start_time_utc": "2026-08-14T18:20:00Z",
+        "home_team_id": 112,
+        "home_team_name": "Chicago Cubs",
+        "away_team_id": 138,
+        "away_team_name": "St. Louis Cardinals",
+        "venue_id": 17,
+        "venue_name": "Wrigley Field",
+        "status": "Scheduled",
+        "lineup_state": "confirmed",
+        "source": "MLB Stats API",
+        "source_retrieved_at": "2026-08-14T17:49:30Z"
+      },
+      "official_prediction": {
+        "record_id": 1,
+        "game_pk": 8000001,
+        "game_date": "2026-08-14",
+        "date_basis": "mlb_official_date",
+        "latest_discovery": {
+          "game_date": "2026-08-14",
+          "scheduled_start_time_utc": "2026-08-14T18:20:00Z",
+          "home_team_id": 112,
+          "home_team_name": "Chicago Cubs",
+          "away_team_id": 138,
+          "away_team_name": "St. Louis Cardinals",
+          "venue_id": 17,
+          "venue_name": "Wrigley Field",
+          "status": "Scheduled",
+          "lineup_state": "confirmed",
+          "source": "MLB Stats API",
+          "source_retrieved_at": "2026-08-14T17:49:30Z"
+        },
+        "home": {
+          "expected_runs": 4.8,
+          "run_distribution": {
+            "probabilities": [
+              0.03939610842131783, 0.0898770534326642, 0.1261012650823313, 0.14000596731574416,
+              0.13494871754578386, 0.11822123392604027, 0.09664473495855007, 0.07496397692602368,
+              0.055795431495319806, 0.040167053345173225, 0.028132209985478693,
+              0.019253984020479734, 0.03649226354509305
+            ],
+            "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12+"],
+            "terminal_bucket_lower_bound": 12,
+            "terminal_bucket_is_censored": true
+          },
+          "intervals": {
+            "50": {
+              "lower": 2,
+              "upper": 7,
+              "upper_is_censored": false
+            },
+            "80": {
+              "lower": 1,
+              "upper": 9,
+              "upper_is_censored": false
+            },
+            "95": {
+              "lower": 0,
+              "upper": 12,
+              "upper_is_censored": true
+            }
+          }
+        },
+        "away": {
+          "expected_runs": 4.0,
+          "run_distribution": {
+            "probabilities": [
+              0.058648313416847404, 0.12218398628509868, 0.1565482324277828, 0.15872251343372407,
+              0.13970887901197596, 0.11176710320958089, 0.08343724718770786, 0.05910138342462636,
+              0.04017047154642578, 0.026408365553668756, 0.016890350468700632, 0.010556469042937885,
+              0.015856684990922965
+            ],
+            "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12+"],
+            "terminal_bucket_lower_bound": 12,
+            "terminal_bucket_is_censored": true
+          },
+          "intervals": {
+            "50": {
+              "lower": 2,
+              "upper": 6,
+              "upper_is_censored": false
+            },
+            "80": {
+              "lower": 1,
+              "upper": 8,
+              "upper_is_censored": false
+            },
+            "95": {
+              "lower": 0,
+              "upper": 11,
+              "upper_is_censored": false
+            }
+          }
+        },
+        "raw_home_win_probability": 0.5727624921697564,
+        "calibrated_home_win_probability": 0.565,
+        "away_win_probability": 0.435,
+        "regulation_tie_probability": 0.1043752437726239,
+        "extra_inning_home_win_probability": 0.5,
+        "distribution_name": "negative_binomial",
+        "dispersion": 0.23,
+        "most_likely_score_bins": [
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "3",
+            "probability": 0.022222099028074736
+          },
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "2",
+            "probability": 0.02191768671262168
+          },
+          {
+            "home_run_bucket": "4",
+            "away_run_bucket": "3",
+            "probability": 0.021419399633524513
+          },
+          {
+            "home_run_bucket": "4",
+            "away_run_bucket": "2",
+            "probability": 0.021125983200188582
+          },
+          {
+            "home_run_bucket": "2",
+            "away_run_bucket": "3",
+            "probability": 0.02001510974103993
+          }
+        ],
+        "data_quality_warnings": ["synthetic_demo"],
+        "provenance": {
+          "prediction_timestamp": "2026-08-14T17:50:00Z",
+          "scheduled_start_time_utc": "2026-08-14T18:20:00Z",
+          "feature_cutoff_timestamp": "2026-08-14T17:50:00Z",
+          "source_retrieved_at": "2026-08-14T17:49:30Z",
+          "model_version": "accepted_v1_2026_prospective",
+          "feature_version": "sprint3_5_v1",
+          "calibration_version": "platt_v1",
+          "distribution_version": "negative_binomial_global_v1",
+          "code_version": "synthetic-demo",
+          "lineup_confirmation_state": "confirmed",
+          "home_starter_id": 900001,
+          "away_starter_id": 900011,
+          "timing_classification": "synthetic_example",
+          "prediction_kind": "synthetic_demo",
+          "minutes_before_scheduled_start": 30.0,
+          "is_official": true
+        },
+        "observed_outcome": null,
+        "explanation": {
+          "status": "available",
+          "method": "pregame_input_summary_v1",
+          "as_of": "2026-08-14T17:50:00Z",
+          "snapshot_version": "pregame_inputs_v1",
+          "home_lineup": [910001, 910002, 910003, 910004, 910005, 910006, 910007, 910008, 910009],
+          "away_lineup": [920001, 920002, 920003, 920004, 920005, 920006, 920007, 920008, 920009],
+          "home_team_id": 112,
+          "away_team_id": 138,
+          "factors": [
+            {
+              "offense_side": "home",
+              "feature": "lineup_on_base_rate",
+              "label": "Lineup on-base proxy",
+              "raw_value": 0.344,
+              "model_value": 0.3405714285714285,
+              "unit": "rate",
+              "sample_size": 1200,
+              "sample_unit": "plate appearances",
+              "note": "(Hits + walks) / (at-bats + walks) across retained prior MLB history; not official OBP. Excludes hit-by-pitch and sacrifice flies. Empty history uses a prior."
+            },
+            {
+              "offense_side": "home",
+              "feature": "starter_era",
+              "label": "Opposing starter ERA",
+              "raw_value": 4.35,
+              "model_value": 4.394117647058823,
+              "unit": "earned runs per nine innings",
+              "sample_size": 12,
+              "sample_unit": "starts",
+              "note": "Opposing starting pitcher's retained prior MLB starts. Empty history uses a prior; the mean model receives the stabilized value, not an assumed current-game outcome."
+            },
+            {
+              "offense_side": "home",
+              "feature": "bullpen_era_30d",
+              "label": "Opposing bullpen ERA",
+              "raw_value": 4.1,
+              "model_value": 4.181818181818182,
+              "unit": "earned runs per nine innings",
+              "sample_size": 210,
+              "sample_unit": "outs",
+              "note": "Opposing team's reliever results from earlier dates within 30 days. This is team history, not a confirmed available-reliever projection. Empty history uses a prior."
+            },
+            {
+              "offense_side": "home",
+              "feature": "team_runs_avg_10",
+              "label": "Recent team scoring",
+              "raw_value": 4.9,
+              "model_value": 4.9,
+              "unit": "runs per game",
+              "sample_size": null,
+              "sample_unit": null,
+              "note": "Average over up to ten retained team games. Early-season or empty-history fallbacks can use earlier history or a league prior; the exact window count was not retained."
+            },
+            {
+              "offense_side": "away",
+              "feature": "lineup_on_base_rate",
+              "label": "Lineup on-base proxy",
+              "raw_value": 0.318,
+              "model_value": 0.3183125,
+              "unit": "rate",
+              "sample_size": 1080,
+              "sample_unit": "plate appearances",
+              "note": "(Hits + walks) / (at-bats + walks) across retained prior MLB history; not official OBP. Excludes hit-by-pitch and sacrifice flies. Empty history uses a prior."
+            },
+            {
+              "offense_side": "away",
+              "feature": "starter_era",
+              "label": "Opposing starter ERA",
+              "raw_value": 3.6,
+              "model_value": 3.825,
+              "unit": "earned runs per nine innings",
+              "sample_size": 15,
+              "sample_unit": "starts",
+              "note": "Opposing starting pitcher's retained prior MLB starts. Empty history uses a prior; the mean model receives the stabilized value, not an assumed current-game outcome."
+            },
+            {
+              "offense_side": "away",
+              "feature": "bullpen_era_30d",
+              "label": "Opposing bullpen ERA",
+              "raw_value": 3.85,
+              "model_value": 3.975806451612903,
+              "unit": "earned runs per nine innings",
+              "sample_size": 225,
+              "sample_unit": "outs",
+              "note": "Opposing team's reliever results from earlier dates within 30 days. This is team history, not a confirmed available-reliever projection. Empty history uses a prior."
+            },
+            {
+              "offense_side": "away",
+              "feature": "team_runs_avg_10",
+              "label": "Recent team scoring",
+              "raw_value": 4.2,
+              "model_value": 4.2,
+              "unit": "runs per game",
+              "sample_size": null,
+              "sample_unit": null,
+              "note": "Average over up to ten retained team games. Early-season or empty-history fallbacks can use earlier history or a league prior; the exact window count was not retained."
+            }
+          ],
+          "note": "Recorded pregame inputs in a fixed order. These are not ranked contributions, causal effects, or estimates of runs added; raw and stabilized model values are shown."
+        },
+        "confidence": {
+          "favorite": "home",
+          "favorite_win_probability": 0.565,
+          "probability_margin_over_even": 0.06499999999999995,
+          "input_quality": {
+            "status": "limited",
+            "fallback_counts": {
+              "home": 2,
+              "away": 1
+            },
+            "recorded_warnings": ["synthetic_demo"],
+            "note": "Missing evidence is unknown quality. Fallbacks or recorded warnings flag limited inputs. No recorded limitations does not certify complete or current data."
+          },
+          "calibration": {
+            "scope": "retrospective_development",
+            "evaluation_seasons": [2022, 2023, 2024, 2025],
+            "evaluated_games": 5928,
+            "brier_score": 0.24485,
+            "log_loss": 0.68266,
+            "expected_calibration_error": 0.01717,
+            "local_reliability": "not_estimated",
+            "source_report": "docs/SPRINT8_FINAL_RETROSPECTIVE_AUDIT.md",
+            "note": "Rounded aggregate chronological development results, not a game-specific reliability estimate or prospective validation. Only four evaluated home probabilities exceeded 0.8."
+          },
+          "note": "Win probability describes the outcome forecast, not confidence that the model is correct. Input quality and calibration evidence are reported separately; no composite score is used."
+        },
+        "run_ranges": {
+          "method": "saved_count_distribution_equal_tailed_v1",
+          "home": {
+            "80": {
+              "lower": 1,
+              "upper": 9,
+              "nominal_mass": 0.8,
+              "model_mass": 0.8767254340276301
+            },
+            "95": {
+              "lower": 0,
+              "upper": 12,
+              "nominal_mass": 0.95,
+              "model_mass": 0.9764291363773957
+            }
+          },
+          "away": {
+            "80": {
+              "lower": 1,
+              "upper": 8,
+              "nominal_mass": 0.8,
+              "model_mass": 0.8716398165269221
+            },
+            "95": {
+              "lower": 0,
+              "upper": 11,
+              "nominal_mass": 0.95,
+              "model_mass": 0.9841433150090767
+            }
+          },
+          "note": "Uncensored marginal count quantiles from the saved means/dispersion. Nominal and model mass are not measured real-world coverage. Saved 12+ bin intervals remain separate."
+        }
+      }
+    },
+    "8000002": {
+      "game_pk": 8000002,
+      "model_version": "accepted_v1_2026_prospective",
+      "prediction_status": "available",
+      "latest_discovery": {
+        "game_date": "2026-08-14",
+        "scheduled_start_time_utc": "2026-08-14T23:20:00Z",
+        "home_team_id": 111,
+        "home_team_name": "Boston Red Sox",
+        "away_team_id": 147,
+        "away_team_name": "New York Yankees",
+        "venue_id": 3,
+        "venue_name": "Fenway Park",
+        "status": "Scheduled",
+        "lineup_state": "confirmed",
+        "source": "MLB Stats API",
+        "source_retrieved_at": "2026-08-14T17:49:30Z"
+      },
+      "official_prediction": {
+        "record_id": 2,
+        "game_pk": 8000002,
+        "game_date": "2026-08-14",
+        "date_basis": "mlb_official_date",
+        "latest_discovery": {
+          "game_date": "2026-08-14",
+          "scheduled_start_time_utc": "2026-08-14T23:20:00Z",
+          "home_team_id": 111,
+          "home_team_name": "Boston Red Sox",
+          "away_team_id": 147,
+          "away_team_name": "New York Yankees",
+          "venue_id": 3,
+          "venue_name": "Fenway Park",
+          "status": "Scheduled",
+          "lineup_state": "confirmed",
+          "source": "MLB Stats API",
+          "source_retrieved_at": "2026-08-14T17:49:30Z"
+        },
+        "home": {
+          "expected_runs": 4.2,
+          "run_distribution": {
+            "probabilities": [
+              0.052911483881809954, 0.11303572345045867, 0.1485103121426933, 0.15440237946066374,
+              0.1393626766800345, 0.11432559763456751, 0.0875178150763094, 0.06356838246641398,
+              0.04430548121800796, 0.029867513279552355, 0.01958859187317127, 0.012554234872937838,
+              0.020049807963379518
+            ],
+            "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12+"],
+            "terminal_bucket_lower_bound": 12,
+            "terminal_bucket_is_censored": true
+          },
+          "intervals": {
+            "50": {
+              "lower": 2,
+              "upper": 6,
+              "upper_is_censored": false
+            },
+            "80": {
+              "lower": 1,
+              "upper": 8,
+              "upper_is_censored": false
+            },
+            "95": {
+              "lower": 0,
+              "upper": 11,
+              "upper_is_censored": false
+            }
+          }
+        },
+        "away": {
+          "expected_runs": 4.7,
+          "run_distribution": {
+            "probabilities": [
+              0.04132457034832223, 0.09333276340082378, 0.12963880471411882, 0.14249262821532657,
+              0.1359705605375227, 0.11792391526099029, 0.09543658206890193, 0.07328575595680227,
+              0.05400026239320593, 0.03848553059023508, 0.026684657418861137, 0.01808042621844988,
+              0.03334354287643937
+            ],
+            "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12+"],
+            "terminal_bucket_lower_bound": 12,
+            "terminal_bucket_is_censored": true
+          },
+          "intervals": {
+            "50": {
+              "lower": 2,
+              "upper": 6,
+              "upper_is_censored": false
+            },
+            "80": {
+              "lower": 1,
+              "upper": 9,
+              "upper_is_censored": false
+            },
+            "95": {
+              "lower": 0,
+              "upper": 12,
+              "upper_is_censored": true
+            }
+          }
+        },
+        "raw_home_win_probability": 0.45478355226946304,
+        "calibrated_home_win_probability": 0.46,
+        "away_win_probability": 0.54,
+        "regulation_tie_probability": 0.10439258955483646,
+        "extra_inning_home_win_probability": 0.5,
+        "distribution_name": "negative_binomial",
+        "dispersion": 0.23,
+        "most_likely_score_bins": [
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "3",
+            "probability": 0.022001200852050134
+          },
+          {
+            "home_run_bucket": "2",
+            "away_run_bucket": "3",
+            "probability": 0.021161624694290896
+          },
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "4",
+            "probability": 0.02099417808359373
+          },
+          {
+            "home_run_bucket": "2",
+            "away_run_bucket": "4",
+            "probability": 0.020193030387644473
+          },
+          {
+            "home_run_bucket": "3",
+            "away_run_bucket": "2",
+            "probability": 0.020016539918296255
+          }
+        ],
+        "data_quality_warnings": ["synthetic_demo"],
+        "provenance": {
+          "prediction_timestamp": "2026-08-14T17:50:00Z",
+          "scheduled_start_time_utc": "2026-08-14T23:20:00Z",
+          "feature_cutoff_timestamp": "2026-08-14T17:50:00Z",
+          "source_retrieved_at": "2026-08-14T17:49:30Z",
+          "model_version": "accepted_v1_2026_prospective",
+          "feature_version": "sprint3_5_v1",
+          "calibration_version": "platt_v1",
+          "distribution_version": "negative_binomial_global_v1",
+          "code_version": "synthetic-demo",
+          "lineup_confirmation_state": "confirmed",
+          "home_starter_id": 900002,
+          "away_starter_id": 900012,
+          "timing_classification": "synthetic_example",
+          "prediction_kind": "synthetic_demo",
+          "minutes_before_scheduled_start": 330.0,
+          "is_official": true
+        },
+        "observed_outcome": null,
+        "explanation": {
+          "status": "not_retained",
+          "method": "pregame_input_summary_v1",
+          "as_of": null,
+          "snapshot_version": null,
+          "home_lineup": null,
+          "away_lineup": null,
+          "home_team_id": null,
+          "away_team_id": null,
+          "factors": [],
+          "note": "Prediction-time inputs were not retained. No historical explanation is reconstructed."
+        },
+        "confidence": {
+          "favorite": "away",
+          "favorite_win_probability": 0.54,
+          "probability_margin_over_even": 0.03999999999999998,
+          "input_quality": {
+            "status": "unknown",
+            "fallback_counts": null,
+            "recorded_warnings": ["synthetic_demo"],
+            "note": "Missing evidence is unknown quality. Fallbacks or recorded warnings flag limited inputs. No recorded limitations does not certify complete or current data."
+          },
+          "calibration": {
+            "scope": "retrospective_development",
+            "evaluation_seasons": [2022, 2023, 2024, 2025],
+            "evaluated_games": 5928,
+            "brier_score": 0.24485,
+            "log_loss": 0.68266,
+            "expected_calibration_error": 0.01717,
+            "local_reliability": "not_estimated",
+            "source_report": "docs/SPRINT8_FINAL_RETROSPECTIVE_AUDIT.md",
+            "note": "Rounded aggregate chronological development results, not a game-specific reliability estimate or prospective validation. Only four evaluated home probabilities exceeded 0.8."
+          },
+          "note": "Win probability describes the outcome forecast, not confidence that the model is correct. Input quality and calibration evidence are reported separately; no composite score is used."
+        },
+        "run_ranges": {
+          "method": "saved_count_distribution_equal_tailed_v1",
+          "home": {
+            "80": {
+              "lower": 1,
+              "upper": 8,
+              "nominal_mass": 0.8,
+              "model_mass": 0.8650283681291487
+            },
+            "95": {
+              "lower": 0,
+              "upper": 11,
+              "nominal_mass": 0.95,
+              "model_mass": 0.9799501920366199
+            }
+          },
+          "away": {
+            "80": {
+              "lower": 1,
+              "upper": 9,
+              "nominal_mass": 0.8,
+              "model_mass": 0.8805668031379266
+            },
+            "95": {
+              "lower": 0,
+              "upper": 12,
+              "nominal_mass": 0.95,
+              "model_mass": 0.9786688050088035
+            }
+          },
+          "note": "Uncensored marginal count quantiles from the saved means/dispersion. Nominal and model mass are not measured real-world coverage. Saved 12+ bin intervals remain separate."
+        }
+      }
+    },
+    "8000003": {
+      "game_pk": 8000003,
+      "model_version": "accepted_v1_2026_prospective",
+      "prediction_status": "not_recorded",
+      "latest_discovery": null,
+      "official_prediction": null
+    }
+  },
+  "model": {
+    "model_version": "accepted_v1_2026_prospective",
+    "feature_version": "sprint3_5_v1",
+    "calibration_version": "platt_v1",
+    "distribution_version": "negative_binomial_global_v1",
+    "mean_model": "Stabilized histogram gradient boosting with Poisson loss",
+    "distribution": "Independent negative binomial; 12+ is censored",
+    "calibration": "Platt logistic calibration",
+    "training_start_season": 2021,
+    "training_end_season": 2025,
+    "retrospective_evidence_only": true,
+    "artifact_sha256_expected": "2d2f6bdd557bb9f4fa981fd88358774617fc246810f2efb2e4c79917ba9df945",
+    "artifact_status": "missing",
+    "known_limitations": [
+      "Historical lineups are reconstructed, not archived T-minus-30 states.",
+      "2021-2025 results are retrospective development evidence.",
+      "Run scores are conditionally independent; extra innings are approximated.",
+      "No game-specific reliability grade or causal factor attribution is claimed."
+    ]
+  }
+}

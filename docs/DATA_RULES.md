@@ -126,3 +126,24 @@ target game's as-of cutoff. They must never be joined directly as same-game preg
 
 The 2025 raw source layer is cached and checksum-manifested. A changed checksum requires a
 new audit and an explicit explanation before rebuilding features.
+
+## Explanation evidence
+
+Retain new predictions' accepted raw/stabilized inputs, starting lineup IDs,
+game/team/starter IDs, cutoff, artifact hash, and version/source at generation time.
+Do not reconstruct missing historical explanations from current databases or latest
+discovery, fill old official snapshots on rerun, or use observed outcomes to explain
+a forecast. Missing evidence is unknown quality, not proof of clean inputs.
+Outcome probabilities, input-quality flags, and retrospective calibration evidence
+must stay distinct. Derived count ranges must not be advertised as empirically
+validated coverage without an appropriate evaluation.
+
+## Hypothetical lineup inputs
+
+Local sandbox input is user-supplied, not confirmed MLB information. Use only
+known IDs and prior-calendar-date normalized history at a UTC cutoff after the
+accepted model's 2025 training end. Retained starting lineups are editable aids,
+not current rosters. Disclose history freshness, cold starts, roster assumptions
+and the model's order-invariant lineup aggregation. Never persist these results
+as official predictions, settle them or include them in prospective scoring.
+The model, feature rules and accepted artifact remain unchanged. See `SANDBOX.md`.

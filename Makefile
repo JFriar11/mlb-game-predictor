@@ -65,7 +65,46 @@ sprint9-5-audit: install postgres quality migrate
 
 install:
 	$(PYTHON) -m venv $(VENV)
-	$(BIN)/python -m pip install -e '.[dev]'
+	$(BIN)/python -m pip install -r requirements/dev.txt -r requirements/build.txt
+	$(BIN)/python -m pip install --no-deps --no-build-isolation -e .
+
+.PHONY: runtime-build runtime-acceptance
+runtime-build:
+	docker build -t mlb-predictor:local .
+
+# Uses only a disposable database; never the Compose development volume.
+runtime-acceptance: runtime-build
+	$(BIN)/python scripts/runtime_acceptance.py --image mlb-predictor:local
+
+.PHONY: release-build release-acceptance recovery-rehearsal infra-check
+BICEP ?= bicep
+release-build:
+	$(BIN)/python scripts/build_release.py
+
+release-acceptance: release-build
+	$(BIN)/python scripts/runtime_acceptance.py --image mlb-predictor:release-local
+
+recovery-rehearsal:
+	$(BIN)/python scripts/rehearse_live_backup.py
+
+infra-check:
+	mkdir -p data/interim
+	$(BICEP) build infra/azure/app.bicep --outfile data/interim/azure-app.compiled.json
+	$(BIN)/python scripts/check_infra.py data/interim/azure-app.compiled.json
+
+.PHONY: dashboard-install dashboard-dev dashboard-build dashboard-test
+dashboard-install:
+	cd frontend && npm ci --no-fund --no-audit
+
+dashboard-dev:
+	cd frontend && npm run dev
+
+dashboard-build:
+	cd frontend && npm run build
+
+# Install project-local Chromium once: cd frontend && PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --no-shell chromium
+dashboard-test: dashboard-build
+	cd frontend && PLAYWRIGHT_BROWSERS_PATH=0 npm test
 
 postgres:
 	docker compose up -d --wait postgres
@@ -88,3 +127,7 @@ validate:
 
 show:
 	$(BIN)/mlb-predictor show-game 778552
+
+.PHONY: sandbox
+sandbox: dashboard-build
+	MLB_SANDBOX_ENABLED=true MLB_WEB_DIRECTORY=frontend/dist MLB_API_HOST=127.0.0.1 MLB_API_PORT=8020 $(BIN)/mlb-predictor-api

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -17,6 +18,11 @@ class Settings(BaseSettings):
     notification_webhook_url: str | None = None
     watcher_idle_seconds: int = Field(default=900, ge=60, le=3600)
     watcher_approaching_seconds: int = Field(default=300, ge=60, le=900)
+    artifact_path: Path = Path("data/processed/accepted_model_v1.joblib")
+    api_host: str = "127.0.0.1"
+    api_port: int = Field(default=8000, ge=1, le=65535)
+    web_directory: Path | None = None
+    sandbox_enabled: bool = False
 
 
 @lru_cache

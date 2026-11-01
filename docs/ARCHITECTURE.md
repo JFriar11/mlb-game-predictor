@@ -266,6 +266,55 @@ and calibrated predictions plus later outcomes; Sprint 8 does not automate its p
 prior-date outcomes before an explicit cutoff. A partial unique index preserves one official
 game/model prediction; settlement changes observed fields only.
 
+## Sprint 10B runtime
+
+The frozen model runs in a pinned Python 3.12 dependency profile and a digest-pinned
+Docker image installed from a wheel. `MLB_ARTIFACT_PATH` locates the trusted model;
+the binary is mounted read-only rather than copied into the build. Raw historical
+caches and credentials are excluded from the build context. The CLI's generated
+data paths use the working directory, while the five-game manifest is bundled in
+the wheel. A disposable PostgreSQL harness verifies migrations, persistence,
+dump/restore equivalence, and host/container inference agreement. See `RUNTIME.md`.
+
+## Sprint 10C API
+
+`mlb_predictor.api` exposes versioned typed GET routes over the accepted official
+prediction ledger. Request-scoped PostgreSQL transactions enforce read-only access;
+the app performs no ingestion, prediction, settlement, fitting, or migrations.
+Response validation parses the retained JSON contract, discloses censored 12+ bins,
+and keeps mutable discovery, immutable forecast provenance, and settlement separate.
+Liveness is dependency-independent; readiness checks required table columns and
+frozen-artifact bytes without deserialization. See `API.md` for date semantics,
+errors, launch commands, and operational limits.
+
+## Sprint 10D presentation evidence
+
+New CLI predictions can retain `prediction_input_snapshots` in the forecast's
+transaction, independently of the immutable forecast columns. The snapshot captures
+raw and stabilized accepted inputs, lineup/team/starter IDs, cutoff, artifact hash,
+and version/source. Official reruns never fill or replace missing evidence.
+API views summarize that evidence without querying outcome history or loading a
+model. Missing legacy inputs remain unavailable. Confidence separates calibrated
+outcome probability, deterministic input-quality flags, and retrospective aggregate
+calibration evidence. Derived count quantiles expose uncensored 80%/95% ranges
+without changing the stored censored-bin forecast. See `EXPLANATIONS.md`.
+
+## Sprint 10E local dashboard
+
+`frontend/` contains a React/TypeScript client built with Vite and locked npm
+dependencies. Browser requests use same-origin API paths, proxied locally to
+FastAPI; no database URL or credentials enter the bundle. Zod validates rendered
+response fields. URL-backed date/game/demo state, cancellable requests, and
+same-query stale warnings prevent silently displaying the wrong record.
+
+The recorded-data view preserves the empty ledger. Synthetic fixture mode is
+explicit, visibly labeled, read-only, and independent of API access. The fixture
+generator uses an in-memory database only and is checked against Python schemas.
+The dashboard presents the existing probability/censoring/evidence semantics
+without generating forecasts. Static production assets are prepared locally;
+approved reverse-proxy/hosting configuration remains Sprint 10F. See
+`../frontend/README.md` for local operation and browser acceptance.
+
 ## Specialized-model dependency order
 
 1. Build pregame bullpen usage state.
@@ -277,3 +326,23 @@ game/model prediction; settlement changes observed fields only.
 7. Simulate regulation and resolve ties or extra innings.
 
 Avoid circular dependencies unless an explicitly tested iterative method is introduced.
+
+### Prepared release boundary (2026-11-01)
+
+The explicit private release image combines the frozen artifact, read-only API
+and approved static dashboard under one origin. Default CLI images remain
+artifact-free. Source/build/model provenance is recorded separately from any
+future registry digest. The Azure module is private/manual-only and expects
+existing resources. Recovery exports normalized live state from a consistent
+snapshot and validates restore using ledger hashes and as-of features. See
+[release runbook](RELEASE.md); cloud deployment and live activation remain gated.
+
+### Optional local sandbox (2026-11-01)
+
+Explicit `MLB_SANDBOX_ENABLED=true` adds catalog/retained-lineup GETs and an ephemeral
+inference POST with its own hypothetical response contract. The default API route
+surface is unchanged. PostgreSQL read-only transactions protect every sandbox
+request. Per-process inference locking limits resource contention. The frozen
+artifact is verified before loading, existing cutoff-aware features are reused,
+and outputs are never attached to a persistence session. A separate React sandbox
+view extends the approved notebook styling. See `SANDBOX.md`.

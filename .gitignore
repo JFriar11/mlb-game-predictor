@@ -22,4 +22,11 @@ data/raw/*
 data/interim/*
 data/processed/*
 !data/**/.gitkeep
+frontend/node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+frontend/*.tsbuildinfo
+infra/**/*.local.*
+infra/**/*.compiled.json
 

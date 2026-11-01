@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
   "alembic>=1.13,<2",
+  "fastapi>=0.115,<1",
   "httpx>=0.27,<1",
   "joblib>=1.4,<2",
   "numpy>=2.0,<3",
@@ -21,6 +22,7 @@ dependencies = [
   "scipy>=1.14,<2",
   "statsmodels>=0.14,<1",
   "tenacity>=9,<10",
+  "uvicorn>=0.30,<1",
 ]
 
 [project.optional-dependencies]
@@ -33,13 +35,18 @@ dev = [
 
 [project.scripts]
 mlb-predictor = "mlb_predictor.cli:main"
+mlb-predictor-api = "mlb_predictor.api.app:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mlb_predictor"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"config/sprint0_games.json" = "mlb_predictor/resources/sprint0_games.json"
+
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
 testpaths = ["tests"]
+markers = ["postgres: isolated PostgreSQL acceptance tests (opt-in)"]
 
 [tool.ruff]
 line-length = 100

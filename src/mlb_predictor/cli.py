@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 from datetime import UTC, date, datetime
+from importlib.resources import files
 from pathlib import Path
 
 from sqlalchemy import func, select
@@ -52,14 +53,19 @@ from mlb_predictor.validation.pitching import audit_pitching_features
 from mlb_predictor.validation.season import audit_season
 from mlb_predictor.watcher import run_watcher, update_status, watcher_status
 
-MANIFEST_PATH = Path(__file__).parents[2] / "config" / "sprint0_games.json"
-PROJECT_ROOT = Path(__file__).parents[2]
-ACCEPTED_ARTIFACT = PROJECT_ROOT / "data" / "processed" / "accepted_model_v1.joblib"
+MANIFEST_PATH = files("mlb_predictor").joinpath("resources/sprint0_games.json")
+PROJECT_ROOT = Path.cwd()
+ACCEPTED_ARTIFACT = get_settings().artifact_path
 LOGGER = logging.getLogger(__name__)
 
 
 def _load_sprint0_ids() -> list[int]:
-    payload = json.loads(MANIFEST_PATH.read_text())
+    # Editable installs use the repository's canonical manifest; wheels carry a
+    # bundled copy so installed CLI commands do not depend on a source checkout.
+    manifest = MANIFEST_PATH
+    if not manifest.is_file():
+        manifest = Path(__file__).parents[2] / "config" / "sprint0_games.json"
+    payload = json.loads(manifest.read_text())
     ids = [int(item["game_pk"]) for item in payload["games"]]
     if len(ids) != 5 or len(set(ids)) != 5:
         raise ValueError("Sprint 0 manifest must contain exactly five unique game IDs")
@@ -366,7 +372,8 @@ def _predict_date(requested: date, dry_run: bool, game_pk: int | None = None) ->
     settings, now = get_settings(), datetime.now(UTC)
     if not ACCEPTED_ARTIFACT.exists():
         raise FileNotFoundError(
-            "Freeze accepted artifact first: mlb-predictor freeze-accepted-model"
+            "Restore the trusted frozen artifact at MLB_ARTIFACT_PATH; "
+            "see docs/RUNTIME.md. Do not refit the accepted model."
         )
     with MlbStatsClient(
         settings.api_base_url, settings.http_timeout_seconds, settings.http_max_attempts
@@ -418,6 +425,7 @@ def _predict_date(requested: date, dry_run: bool, game_pk: int | None = None) ->
                             cutoff=now,
                             launch=launch,
                             artifact_path=ACCEPTED_ARTIFACT,
+                            feature_pair=(away, home),
                         )
             except Exception:
                 LOGGER.exception("game polling failed", extra={"game_pk": game.game_pk})

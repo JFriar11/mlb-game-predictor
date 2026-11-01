@@ -1,5 +1,7 @@
 # Sprint 10A.5 Hosting and Cost Decision
 
+Current release/hosting gates and updated cost assumptions: [release runbook](RELEASE.md) and [November review](HOSTING_REVIEW_2026_11.md). Historical estimates below are not a current complete-system quote.
+
 **Decision date:** 2026-08-13  
 **Scope:** Operate the frozen `accepted_model_v1` watcher through the remainder of the
 2026 regular season. No resources were provisioned by this sprint.

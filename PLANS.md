@@ -2,6 +2,167 @@
 
 Use this file for substantial multi-step work. Keep the active plan updated as work proceeds.
 
+## Completed plan: Portfolio README presentation
+
+**Status:** Completed 2026-11-01; user approved the local sandbox and requested
+resume-ready project presentation.
+
+- Reorganized the README around product capabilities, engineering, audited
+  retrospective results, architecture, local demo/inference and honest limitations.
+- Added an actual local-model sandbox screenshot; no synthetic result is presented
+  as official or prospective. Static technology badges claim no remote CI status.
+- Preserved detailed setup/research commands in `docs/REPRODUCTION.md`.
+- Verified local links/image targets, fenced blocks and whitespace. No application
+  code, fitted models, database state, commits, pushes or deployments changed.
+- Next: user review, then separately authorize any Git commit/push or publication.
+
+## Completed plan: Local offseason lineup sandbox
+
+**Status:** Completed 2026-11-01; stop for local user acceptance.
+
+- User selected local operation; defer cloud deployment.
+- Add opt-in catalog, prior-date lineup suggestions and hypothetical inference API.
+- Preserve approved notebook styling; provide named-player inputs and explicit
+  unsaved results, distributions/ranges, input summaries and uncertainty warnings.
+- Reuse the frozen artifact and cutoff-aware feature builder; no training, new
+  ingestion, official predictions or database writes.
+- Verify input conflicts, prior-date leakage boundary, error/stale behavior,
+  mobile/accessibility, real PostgreSQL/model inference and unchanged ledger.
+- Update project/data/architecture/decision docs and local operating guide.
+- Stop for local user acceptance at this milestone boundary.
+
+Validation: 99 Python tests passed with one opt-in PostgreSQL skip; Ruff and
+production TypeScript/Vite build passed. All 22 browser checks passed, including
+real local-model inference, mobile/keyboard and automated accessibility. Actual
+inference left all 18 domain-table row counts unchanged and the official ledger
+at zero. Excluded historical sentinel venue -1 from selectable parks after real
+catalog validation. No fitting, ingestion, scheduling, cloud, commits or pushes.
+Known limits: history ends 2026-08-13; custom rosters/order effects are not validated;
+large-history scans remain per request. Next: try custom lineups locally using
+`make sandbox VENV=.venv-sprint10b`. See `docs/SANDBOX.md`.
+
+## Completed plan: Sprint 10F — Release preparation
+
+**Status:** Preparation completed 2026-11-01; cloud provisioning remains unapproved.
+
+- Preserve the approved UI. Add a single-origin release image containing the static
+  dashboard and read-only API, plus explicit source-revision provenance.
+- Package the trusted frozen artifact through an explicit BuildKit input, outside
+  the ordinary source context; never embed database/registry credentials.
+- Prepare a reviewable Azure app/worker module using existing approved resources,
+  private ingress and manual-only job defaults. Validate templates offline.
+- Export normalized live state from a consistent read-only local snapshot, restore
+  into a disposable database, and compare counts, ledger state, and as-of features.
+- Validate release HTTP/browser/security behavior and document refreshed hosting
+  assumptions, deployment gates, recovery, rollback, and unresolved approval choices.
+- Stop after preparation; do not provision, publish, enable live polling, commit, or push.
+
+Validation: 82 Python tests passed, one opt-in integration skip; 15 release browser
+checks passed. Offline Bicep policy checks, isolated release/PostgreSQL acceptance
+and normalized-state recovery passed. See `docs/RELEASE.md`. Stop for provider,
+budget and access selection; no cloud deployment or polling activation.
+
+## Completed plan: Sprint 10E — Local React dashboard
+
+**Status:** Completed 2026-11-01; stop for review before Sprint 10F.
+
+- Add a repository-local React/TypeScript dashboard with a Vite development proxy
+  to the existing read-only API; no hosting registration, publication, or model writes.
+- Implement dated slate, deep-linked game detail/lookup, probability charts, count
+  ranges, input summaries, qualified confidence, provenance, and model metadata.
+- Keep the real empty ledger honest. Provide only an explicit, persistently labeled
+  synthetic demo mode, with no demo writes or automatic fallback to sample forecasts.
+- Validate runtime response contracts, loading/error/stale/empty/not-recorded states,
+  keyboard/accessibility and mobile layouts, production build, and backend regressions.
+- Update operating instructions, architecture, roadmap, decisions, and audit;
+  stop before hosting/deployment work.
+
+Completion: production build/TypeScript passed; all 15 browser checks passed,
+including actual local API proxy verification, mobile keyboard/reflow and automated
+desktop accessibility. Python regressions passed 79 tests with one opt-in PostgreSQL
+skip; fixture contracts and frozen-model checksum passed. The empty real ledger
+remains empty. No schema/model changes, API writes, commit, push, Site registration,
+or cloud deployment. Temporary owned servers stopped. See
+`docs/SPRINT10E_DASHBOARD_AUDIT.md` and `frontend/README.md`.
+
+## Completed plan: Sprint 10D — Explanation evidence and uncertainty
+
+**Status:** Completed and approved 2026-11-01.
+
+- Add migration `0014` for immutable, optional prediction-time raw/stabilized input
+  snapshots. Preserve old predictions and never reconstruct missing evidence.
+- Capture inputs atomically in the CLI prediction transaction without altering
+  frozen model outputs, official-record idempotency, or settlement.
+- Expose deterministic baseball input summaries, separately qualified input
+  quality/calibration evidence, and uncensored marginal 80%/95% run ranges.
+- Validate evidence integrity, legacy behavior, outcome/discovery independence,
+  quantile mathematics, PostgreSQL migration/recovery, and container HTTP behavior.
+- Document scientific semantics and limits; stop before React or hosting work.
+
+Completion: 78 tests passed; opt-in PostgreSQL acceptance passed separately.
+Full container HTTP/migration/recovery/frozen-inference acceptance passed across
+19 tables. Applied additive `0014` locally after isolated acceptance; all 17 old
+domain-table counts and forecast/launch hashes were unchanged. API readiness and
+dated GET passed; the retained ledger and new snapshots are empty. No refitting,
+ingestion, retrospective explanations, commit, push, or deployment. See
+`docs/SPRINT10D_EXPLANATION_AUDIT.md`. Next: Sprint 10E React dashboard.
+
+## Completed plan: Sprint 10C — Read-only prediction API
+
+**Status:** Completed and approved 2026-11-01.
+
+1. Define versioned typed contracts for official dated predictions, game detail,
+   model metadata, and health/readiness; preserve ledger provenance and tail labels.
+2. Add FastAPI with request-scoped read-only database transactions and safe failures.
+   Serve retained predictions without loading/refitting model artifacts or calling MLB.
+3. Test empty/missing dates, record selection, invalid stored payloads, dependencies,
+   and read-only behavior, including isolated PostgreSQL and container acceptance.
+4. Update dependency pins, operation instructions, architecture/decision records,
+   and the sprint audit; stop before explanations/frontend/hosting work.
+
+Completion: all five typed GET routes implemented; `make quality` passed with
+50 tests and one opt-in PostgreSQL skip. Full runtime acceptance passed separately,
+including that PostgreSQL test, enforced read-only writes rejection, all five routes
+over real container HTTP, 18-table recovery equivalence, and unchanged frozen-model
+host/container inference. See `docs/SPRINT10C_API_AUDIT.md` and `docs/API.md`.
+No production-data mutation, refitting, commit, push, cloud deployment, or live
+collection. Next recommendation: Sprint 10D product semantics and explanations.
+
+## Completed plan: Sprint 10B — Runtime and database acceptance
+
+**Status:** Completed and approved 2026-11-01.
+
+- Pinned the accepted Python 3.12 scientific runtime plus build/development tools.
+- Added a non-root digest-pinned Docker image installed from a wheel, safe build
+  context, bundled manifest, and configurable artifact path.
+- Validated clean/repeated migrations through `0013`, ingestion/discovery/official
+  idempotency, PostgreSQL uniqueness, settlement forecast invariance, and complete
+  logical dump/restore equivalence across 18 tables and sequence states.
+- Verified checksum-enforced frozen-model inference agrees between host and container.
+- Fresh pinned installation, `make quality` (31 passed; opt-in PostgreSQL test
+  skipped), and `make runtime-acceptance` (PostgreSQL test and full harness passed)
+  succeeded using `.venv-sprint10b`. Host/container dependency checks passed.
+- Added CI packaging/PostgreSQL checks, Make targets, runtime/recovery instructions,
+  and `docs/SPRINT10B_RUNTIME_AUDIT.md` with evidence and limitations.
+
+No refitting, historical-data mutation, live collection, cloud provisioning,
+commit, or push. Next recommendation: Sprint 10C read-only FastAPI service.
+
+## Completed plan: Resumption and completion readiness
+
+**Status:** Completed 2026-11-01; stop for review before Sprint 10B.
+
+- Inspected implementation and source-of-truth documents through Sprint 10A.5.
+- Verified 31 passing tests, Ruff, formatting, CLI loading, and frozen artifact checksum.
+- Confirmed Docker daemon is unavailable; no persisted database acceptance claimed.
+- Added Python 3.11/3.12 GitHub Actions quality workflow; remote execution pending push.
+- Corrected README status and documented ordered completion gates, scientific
+  limitations, remaining deployment approval, and manual prerequisites in
+  `docs/COMPLETION_PLAN.md`.
+
+Recommended next milestone: Sprint 10B, local reproducible runtime and database
+acceptance. Do not provision cloud resources or refit the frozen model.
+
 ## Completed plan: Sprint 0 — Foundation and controlled ingestion
 
 **Status:** Completed 2026-08-03 and approved for Sprint 1.

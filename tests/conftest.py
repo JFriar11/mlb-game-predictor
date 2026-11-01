@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from mlb_predictor.db.models import Base
+from mlb_predictor.live_features import build_live_feature_pair
 
 
 @pytest.fixture
@@ -14,6 +15,26 @@ def session() -> Session:
     Base.metadata.create_all(engine)
     with Session(engine) as db_session:
         yield db_session
+
+
+@pytest.fixture
+def feature_pair(session: Session) -> tuple[dict[str, Any], dict[str, Any]]:
+    away, home, _ = build_live_feature_pair(
+        session,
+        game_pk=999002,
+        home_team_id=20,
+        away_team_id=10,
+        venue_id=30,
+        home_starter_id=250,
+        away_starter_id=150,
+        home_lineup=tuple(range(201, 210)),
+        away_lineup=tuple(range(101, 110)),
+        as_of=datetime(2026, 8, 14, tzinfo=UTC),
+    )
+    home.update(
+        lineup_prior_pa=200, lineup_on_base_rate=0.4, starter_prior_starts=1, starter_era=8.0
+    )
+    return away, home
 
 
 @pytest.fixture

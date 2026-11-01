@@ -1,5 +1,14 @@
 # Roadmap
 
+## Resumption — 2026-11-01
+
+Repository readiness audit completed: 31 tests, Ruff, formatting, CLI loading, and
+the local frozen-artifact checksum passed. Docker was unavailable, so persisted
+database and live-operation state remain unverified. See
+[COMPLETION_PLAN.md](COMPLETION_PLAN.md) for the remaining release gates, beginning
+with Sprint 10B reproducible runtime and PostgreSQL acceptance. Hosting approval
+remains outstanding; this resumption does not authorize paid infrastructure.
+
 ## Sprint 0 — Repository and five-game ingestion
 
 **Completed and approved 2026-08-03.** Delivered the typed local foundation and
@@ -182,6 +191,29 @@ documented cheapest acceptable alternative. No resources were provisioned. See
 
 ## Sprint 10 — Application and deployment
 
+**Sprint 10B completed and approved 2026-11-01.** Added pinned runtime and
+wheel/container packaging, isolated PostgreSQL persistence and dump/restore
+acceptance, and frozen-artifact host/container inference checks. See
+`SPRINT10B_RUNTIME_AUDIT.md`.
+
+**Sprint 10C completed and approved 2026-11-01.** Added a typed read-only
+FastAPI service for accepted official predictions, game detail, model metadata,
+and health/readiness. Verified PostgreSQL read-only enforcement and real container
+HTTP operation. See `SPRINT10C_API_AUDIT.md`. Next: Sprint 10D explanations,
+confidence reporting, and product semantics.
+
+**Sprint 10D completed and approved 2026-11-01.** Added immutable optional
+prediction-time input evidence, baseball input summaries, qualified confidence
+components, and uncensored marginal run ranges. Isolated acceptance and additive
+local database migration passed; no old inputs were reconstructed. See
+`SPRINT10D_EXPLANATION_AUDIT.md`. Next: Sprint 10E React dashboard.
+
+**Sprint 10E completed 2026-11-01; awaiting review.** Added the local React
+dashboard with typed/runtime-validated API reads, date/game navigation, probability
+and evidence views, honest missing/stale/error states, and an explicit synthetic
+demo. Production build, browser/accessibility checks, and the real local API proxy
+passed. See `SPRINT10E_DASHBOARD_AUDIT.md`. Next: Sprint 10F release/hosting preparation.
+
 Build:
 
 - FastAPI
@@ -191,3 +223,16 @@ Build:
 - Scheduling
 - Monitoring
 - Model and pipeline version display
+
+**Sprint 10E approved; Sprint 10F release preparation completed 2026-11-01.**
+Private release packaging, offline infrastructure policy checks and normalized
+state recovery are prepared. Hosting deployment, monitoring configuration,
+season rollover review and genuine prospective acceptance remain outstanding.
+See `RELEASE.md` and `HOSTING_REVIEW_2026_11.md`. Stop for provider/budget/access
+selection before creating resources or publishing images.
+
+**Local sandbox milestone (2026-11-01):** User selected local operation. Optional
+custom-lineup inference is implemented over the accepted model with known-player
+entry, retained-lineup suggestions, prior-date cutoffs and clearly hypothetical,
+unsaved results. Cloud deployment is deferred. See `SANDBOX.md` for use/limits;
+next recommended action is local user acceptance, not new modeling or ingestion.

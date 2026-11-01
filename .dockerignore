@@ -1,0 +1,27 @@
+# Allow only the source needed by the runtime. Never send secrets or data to Docker.
+**
+!Dockerfile
+!pyproject.toml
+!README.md
+!alembic.ini
+!requirements/
+!requirements/**
+!src/
+!src/**
+!migrations/
+!migrations/**
+!config/
+!config/*.json
+!scripts/
+!scripts/verify_runtime.py
+!scripts/verify_api.py
+!frontend/
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/index.html
+!frontend/tsconfig.json
+!frontend/vite.config.ts
+!frontend/src/
+!frontend/src/**
+**/__pycache__
+**/*.pyc

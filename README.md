@@ -1,190 +1,216 @@
+<div align="center">
+
 # MLB Game Predictor
 
-Live CLI operation is documented in [docs/LIVE_OPERATIONS.md](docs/LIVE_OPERATIONS.md).
+### Probabilistic baseball forecasting, from historical data to an interactive lineup sandbox.
 
-A typed, PostgreSQL-backed foundation for a leakage-controlled MLB pregame forecasting
-system. Sprint 0 reconstructs exactly five completed games from the MLB Stats API.
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-TypeScript-149ECA?logo=react&logoColor=white)
+![Runtime](https://img.shields.io/badge/Runtime-Docker-2496ED?logo=docker&logoColor=white)
 
-## Supported local setup
+[Results](#evaluation) · [Architecture](#architecture) · [Try it locally](#try-it-locally) · [Technical documentation](#technical-documentation)
 
-The supported PostgreSQL workflow is the repository's Docker Compose service. It requires
-Python 3.11+ and Docker Desktop (or another Docker engine with Compose). Homebrew
-PostgreSQL and ad hoc temporary clusters are not supported project workflows.
+</div>
 
-Start Docker Desktop first and wait until its engine reports ready. From a fresh clone,
-run the complete Sprint 0 acceptance workflow with one command:
+An end-to-end sports analytics project that estimates how many runs each team will
+score—and the uncertainty around those estimates. It combines MLB data ingestion,
+cutoff-aware feature engineering, chronological model evaluation, calibrated win
+probabilities, a typed API, and an interactive React dashboard.
 
-```bash
-make sprint0-acceptance
+The primary forecasting product targets confirmed starting lineups approximately
+30 minutes before first pitch. An offseason **lineup sandbox** lets users choose
+their own matchup and run the frozen model locally, without creating official
+prediction records.
+
+**Current status:** Local application implemented and verified. Cloud deployment
+is deferred by choice. Reported model performance is retrospective development
+evidence; the prospective prediction ledger is empty.
+
+<details>
+<summary><strong>See the lineup sandbox and an actual local-model result</strong></summary>
+
+![Lineup sandbox showing editable Arizona and Athletics lineups, predicted runs, win probabilities, run ranges, and hypothetical-result labeling](docs/assets/lineup-sandbox.png)
+
+Actual inference from the accepted model using retained lineups. This is a
+hypothetical matchup, not an official forecast or a performance claim.
+
+</details>
+
+## What it does
+
+- **Forecasts both teams:** Expected runs, run distributions, calibrated win
+  probabilities, most likely score combinations, and 80%/95% run ranges.
+- **Supports custom matchups:** Search players by name, enter nine hitters per
+  side, choose starters and a park, or load retained lineups and edit them.
+- **Shows the evidence:** Raw and stabilized baseball inputs, sample sizes,
+  fallback warnings, history cutoffs, and model/version provenance.
+- **Separates uncertainty:** Outcome probability, input quality, and retrospective
+  calibration evidence appear separately, without an invented confidence score.
+- **Preserves the record:** Official forecasts retain immutable inputs/provenance;
+  settlement is separate. Sandbox predictions are explicitly hypothetical and unsaved.
+
+## Technical highlights
+
+| Area | Implementation |
+| --- | --- |
+| Data engineering | Idempotent MLB Stats API ingestion, normalized PostgreSQL tables, stable entity IDs, source timestamps, and Alembic migrations |
+| Leakage controls | Explicit `as_of` cutoffs, prior-date features, exclusion of same-day outcomes, and documented historical-lineup reconstruction |
+| Model development | League/team baselines, Poisson and negative-binomial methods, histogram gradient boosting, rolling-origin evaluation, and feature ablations |
+| Probability modeling | Negative-binomial run distributions, analytic score convolution, an extra-innings approximation, and Platt win-probability calibration |
+| API and product | FastAPI/Pydantic contracts, React/TypeScript, browser-side Zod validation, accessible responsive views, and stale-response handling |
+| Reliability | Checksum-verified frozen artifact, read-only API transactions, immutable official forecasts, pinned container runtime, and tested PostgreSQL backup/restore |
+
+The accepted model uses **histogram gradient boosting with Poisson loss** for run
+means, a **training-fold negative-binomial dispersion** for scoring uncertainty,
+and **Platt calibration** for home-win probabilities. More elaborate matchup,
+pitching, and environment features were evaluated in chronological ablations;
+bundles without robust improvement were not promoted.
+
+## Evaluation
+
+Historical research covers the **2021–2025 regular seasons**, with expanding
+rolling-origin evaluation across **2022–2025**. Game-level evaluation never uses
+random train/test splits.
+
+| Run-forecast metric | Result |
+| --- | ---: |
+| Mean absolute error | 2.4488 runs |
+| Root mean squared error | 3.1304 runs |
+| Poisson deviance — accepted mean model | 2.2765 |
+| Poisson deviance — league-average reference | 2.3313 |
+| Count negative log likelihood — negative binomial | 2.4132 |
+| Count negative log likelihood — Poisson reference | 2.5746 |
+
+For win calibration, each evaluation season's first 40% of dates fit the
+calibrator; the remaining dates evaluate it. Across **5,928 evaluation games**:
+
+| Win-probability metric | Before calibration | Platt calibration |
+| --- | ---: | ---: |
+| Brier score ↓ | 0.24558 | **0.24485** |
+| Log loss ↓ | 0.68432 | **0.68266** |
+| Expected calibration error ↓ | 0.02944 | **0.01717** |
+
+These results informed model selection through repeated retrospective review.
+They are **not an untouched final test or prospective validation**. See the
+[final retrospective audit](docs/SPRINT8_FINAL_RETROSPECTIVE_AUDIT.md) and
+[distribution audit](docs/SPRINT7_DISTRIBUTION_SIMULATION_AUDIT.md) for methodology,
+coverage, comparisons, and limitations.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[MLB Stats API] --> B[Idempotent ingestion]
+    B --> C[(PostgreSQL history)]
+    C --> D[As-of feature builder]
+    D --> E[Frozen run-mean model]
+    E --> F[Run distributions and calibrated wins]
+    F --> G[Official pregame pipeline]
+    G --> H[(Immutable prediction ledger)]
+    H --> I[FastAPI]
+    F --> J[Ephemeral lineup sandbox]
+    J --> I
+    I --> K[React / TypeScript dashboard]
 ```
 
-This creates the ignored `.venv-sprint0`, installs development dependencies, starts and
-health-checks PostgreSQL, runs Ruff and pytest, upgrades and checks Alembic, ingests the
-same five games twice, validates exact counts, and prints game 778552. The Compose
-database persists in the named `mlb_postgres_data` volume and listens on port 55432. The
-Make target explicitly binds commands to that database so an existing ignored `.env`
-cannot redirect acceptance to another local PostgreSQL instance.
+The official pipeline gates forecasts on lineup availability and pregame timing.
+The optional sandbox reuses the accepted features and artifact through read-only
+database transactions; it never writes to the official ledger. Administrative
+fitting and ingestion remain outside HTTP request handlers.
 
-The equivalent explicit commands are:
+## Try it locally
 
-```bash
-python3.12 -m venv .venv-sprint0
-.venv-sprint0/bin/python -m pip install -e '.[dev]'
-docker compose up -d --wait postgres
-export MLB_DATABASE_URL=postgresql+psycopg://mlb:mlb@localhost:55432/mlb_predictor
-.venv-sprint0/bin/ruff check .
-.venv-sprint0/bin/ruff format --check .
-.venv-sprint0/bin/pytest -q
-.venv-sprint0/bin/alembic upgrade head
-.venv-sprint0/bin/alembic check
-.venv-sprint0/bin/mlb-predictor ingest-five
-.venv-sprint0/bin/mlb-predictor ingest-five
-.venv-sprint0/bin/mlb-predictor validate --expected-games 5
-.venv-sprint0/bin/mlb-predictor show-game 778552
-```
+### Explore the interface without a database or model artifact
 
-The ingestion command is deliberately bound to the five IDs in
-`config/sprint0_games.json`; it cannot trigger a season download.
-
-## 2025 historical layer
-
-After Sprint 0 approval, the 2025 regular season can be reproduced and audited with:
+Requires Node.js 22.12+. From a fresh checkout:
 
 ```bash
-export MLB_DATABASE_URL=postgresql+psycopg://mlb:mlb@localhost:55432/mlb_predictor
-.venv-sprint0/bin/alembic upgrade head
-.venv-sprint0/bin/mlb-predictor ingest-season --season 2025
-.venv-sprint0/bin/mlb-predictor audit-season --season 2025 \
-  --output data/interim/2025_season_audit.json
-.venv-sprint0/bin/mlb-predictor freeze-raw --season 2025 \
-  --output data/interim/2025_raw_manifest.json
+make dashboard-install
+make dashboard-dev
 ```
 
-The ingestion is restricted to 2025, caches responses under ignored `data/raw/`, and is
-safe to rerun. The accepted counts and limitations are in `docs/SEASON_2025_AUDIT.md`.
+Open <http://127.0.0.1:5173/?demo=1&date=2026-08-14>.
+This explicit demo uses **synthetic fixtures**, makes no API requests, and does
+not run the model. It is a quick way to explore the forecast interface.
 
-## Leakage-safe 2025 features
+### Predict a custom lineup
+
+Requires Python 3.12, Node.js 22.12+, the supported PostgreSQL 16 Compose service,
+the trusted accepted model artifact, and normalized historical data. With those
+local prerequisites already available:
 
 ```bash
-export MLB_DATABASE_URL=postgresql+psycopg://mlb:mlb@localhost:55432/mlb_predictor
-.venv-sprint0/bin/alembic upgrade head
-.venv-sprint0/bin/mlb-predictor build-features --season 2025 --version sprint2_v1
-.venv-sprint0/bin/mlb-predictor audit-features --version sprint2_v1 \
-  --output data/interim/2025_feature_audit.json
+make sandbox VENV=.venv-sprint10b
 ```
 
-The builder emits two rows per game and excludes all same-day outcomes. Definitions,
-fallbacks, observed ranges, and limitations are in `docs/FEATURE_2025_AUDIT.md`.
+Open <http://127.0.0.1:8020/?sandbox=1>. Choose teams, pitchers, nine hitters per
+side, a park, and a history cutoff, then select **Predict this matchup**. Stop the
+server with Ctrl+C. Use `VENV=.venv-sprint0` instead if that is your installed
+environment; Make commands target the supported local Compose database.
 
-## Sprint 3 chronological baseline evaluation
+**A fresh clone does not contain the private frozen artifact, database, or raw
+caches.** The synthetic demo works without them; real inference requires trusted
+artifact/history recovery. See the [sandbox guide](docs/SANDBOX.md),
+[runtime and recovery instructions](docs/RUNTIME.md), and
+[detailed reproduction commands](docs/REPRODUCTION.md). Do not refit the accepted
+model merely to recreate its artifact.
 
-With the accepted 2025 database and immutable `sprint2_v1` snapshots present, reproduce
-the complete modeling audit with:
+## Validation and reproducibility
+
+Latest local verification, **November 1, 2026**:
+
+- **99 Python tests passed**, with one opt-in PostgreSQL integration skip in the
+  default suite; Ruff lint and formatting passed.
+- **22 Chromium checks passed**, including real local-model inference, response
+  validation, error states, mobile keyboard behavior, and automated accessibility.
+- TypeScript checking and the Vite production build passed.
+- Separate isolated PostgreSQL acceptance verified migrations, persistence,
+  forecast immutability, settlement, and backup/restore.
+- A normalized-state recovery rehearsal reproduced as-of features after restore.
+  Real sandbox inference left all 18 domain-table row counts unchanged.
 
 ```bash
-make sprint3-audit
+make quality VENV=.venv-sprint10b
+make dashboard-test
 ```
 
-This installs bounded dependencies, starts PostgreSQL, runs Ruff, formatting, pytest,
-and Alembic checks, re-audits `sprint2_v1`, then writes the ignored modeling dataset,
-predictions, fitted models, and metadata under `data/processed/sprint3/`. It does not
-rebuild features, mutate the frozen raw layer, or ingest data. See
-`docs/MODEL_2025_AUDIT.md` for the split policy, comparisons, and limitations.
+The default browser suite uses fixtures; actual API/model checks are explicitly
+opt-in. GitHub Actions workflows are defined for Python quality, frontend checks,
+PostgreSQL/package acceptance, and infrastructure policy. The checks above were
+verified locally; no remote CI status is claimed.
 
-## Sprint 3.5 multi-season foundation
+## Scope and limitations
 
-Seasons 2021–2025 are cached and audited independently. After those accepted database
-rows and the three `sprint3_5_*` feature versions exist, reproduce the feature audit and
-rolling-origin model audit with:
+- Historical starting lineups are reconstructed from game records, not archived
+  T-minus-30 confirmation snapshots.
+- Local history currently ends **August 13, 2026**. The sandbox exposes its cutoff
+  and warns about stale history; it fetches no current rosters or injuries.
+- The model aggregates the nine hitters. Changing their order alone does not
+  change a prediction; custom roster and postseason scenarios are not separately validated.
+- Regulation scoring assumes conditional home/away independence. Extra innings
+  use a prior-training approximation.
+- Distributions and score combinations label the tail **12+**. Uncensored count
+  ranges are model quantiles, not guarantees of empirical coverage.
+- Observed in-game weather and unpromoted research features are excluded from the
+  accepted model. No prospective accuracy or deployed-cloud operation is claimed.
 
-```bash
-make sprint3-5-audit
-```
+## Technical documentation
 
-All 2022–2025 evaluation origins are retrospective development evidence. The project
-reserves 2026 live predictions, or another future locked period, for prospective testing.
-See `docs/MULTISEASON_2021_2025_AUDIT.md`.
+| Start here | Details |
+| --- | --- |
+| [Project specification](docs/PROJECT_SPEC.md) | Product scope, outputs, and success criteria |
+| [Architecture](docs/ARCHITECTURE.md) | Data, modeling, API, and application boundaries |
+| [Data rules](docs/DATA_RULES.md) | Leakage prevention, cutoffs, provenance, and fallback policy |
+| [Frozen model specification](config/accepted_model_v1.json) | Accepted features, parameters, calibration, and limitations |
+| [Lineup sandbox](docs/SANDBOX.md) | Local startup, custom lineups, contracts, and scientific boundaries |
+| [API reference](docs/API.md) | Official forecast endpoints, readiness, and response semantics |
+| [Explanation semantics](docs/EXPLANATIONS.md) | Baseball inputs, confidence, and uncensored ranges |
+| [Reproduction guide](docs/REPRODUCTION.md) | Setup, ingestion acceptance, and research audit commands |
+| [Release and recovery](docs/RELEASE.md) | Private packaging, infrastructure preparation, recovery, and rollback |
+| [Decision log](docs/DECISIONS.md) | Modeling and engineering choices with rationale |
 
-## Sprint 4 confirmed-lineup matchup layer
-
-From the accepted 2021–2025 database and frozen raw caches, reproduce the normalized
-matchup aggregates, versioned features, validation, and rolling-origin ablation with:
-
-```bash
-make sprint4-audit
-```
-
-The command reads cached completed-game feeds and does not download data or mutate the
-frozen raw layer. It creates compact handedness and pitch-group aggregates, rebuilds
-`sprint4_v1`, and writes ignored evaluation artifacts under `data/processed/sprint4/`.
-The full feature bundle did not improve combined backtest Poisson deviance, so it is not
-promoted over `sprint3_5_v1`. See `docs/SPRINT4_MATCHUP_AUDIT.md`.
-
-## Sprint 5 starter and bullpen models
-
-From the accepted normalized 2021–2025 database, reproduce the versioned pitching state,
-component forecasts, validation, and downstream run-model ablation with:
-
-```bash
-make sprint5-audit
-```
-
-This does not download or modify raw data. Pitcher rolling history beat gradient boosting
-for starter outs and pitch count; adding the complete bullpen/state bundle slightly
-worsened combined run-model Poisson deviance, so it is not promoted wholesale. See
-`docs/SPRINT5_PITCHING_AUDIT.md`.
-
-## Sprint 5.5 downstream pitching ablation
-
-Run the fixed eleven-subset downstream comparison from accepted `sprint3_5_v1` and
-`sprint5_v1` with:
-
-```bash
-make sprint5-5-audit
-```
-
-No subset met the robust promotion standard. Available-reliever quality had the best
-combined Poisson-deviance change but worsened three of four season origins, so no new
-feature/model version was created. See `docs/SPRINT5_5_DOWNSTREAM_ABLATION.md`.
-
-## Sprint 6 run environment
-
-```bash
-make sprint6-audit
-```
-
-This rebuilds prior-date park context and evaluates cached-feed venue/weather proxies.
-Observed weather is not promoted because it is not an archived pregame forecast. See
-`docs/SPRINT6_ENVIRONMENT_AUDIT.md`.
-
-## Sprint 7 distributions and simulation
-
-```bash
-make sprint7-audit
-```
-
-This reproduces the rolling-origin run-distribution comparison, dependence audit,
-extra-inning approximation, analytic win probabilities, and deterministic simulation.
-See `docs/SPRINT7_DISTRIBUTION_SIMULATION_AUDIT.md`.
-
-## Sprint 8 calibration and frozen specification
-
-```bash
-make sprint8-audit
-```
-
-This reproduces Sprint 7, runs nested chronological calibration, and audits the frozen
-`accepted_v1_2026_prospective` specification. See
-`docs/SPRINT8_FINAL_RETROSPECTIVE_AUDIT.md`.
-
-## Quality checks
-
-```bash
-.venv-sprint0/bin/ruff check .
-.venv-sprint0/bin/ruff format --check .
-.venv-sprint0/bin/pytest
-```
-
-Configuration is environment-based; see `.env.example`. The values committed in Compose
-and `.env.example` are local-development defaults, not production credentials. Never
-commit `.env`, real credentials, database files, raw/generated data, or environment folders.
+**Stack:** Python · pandas · NumPy · scikit-learn · SciPy · SQLAlchemy · Alembic ·
+PostgreSQL · FastAPI · Pydantic · React · TypeScript · Vite · Zod · Docker · pytest ·
+Ruff · Playwright · GitHub Actions

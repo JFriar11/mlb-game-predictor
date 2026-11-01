@@ -435,6 +435,17 @@ class LivePredictionRecord(Base):
     minutes_before_actual_start: Mapped[float | None] = mapped_column(Float)
 
 
+class PredictionInputSnapshot(Base):
+    __tablename__ = "prediction_input_snapshots"
+    prediction_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("live_prediction_records.id"), primary_key=True
+    )
+    snapshot_version: Mapped[str] = mapped_column(String(40))
+    as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    source: Mapped[str] = mapped_column(String(60))
+    payload_json: Mapped[str] = mapped_column(Text)
+
+
 class LiveGameState(Base):
     __tablename__ = "live_game_states"
     game_pk: Mapped[int] = mapped_column(Integer, primary_key=True)
